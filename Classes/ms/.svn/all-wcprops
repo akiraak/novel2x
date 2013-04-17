@@ -1,0 +1,257 @@
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/akiraak-msp-framework/!svn/ver/61/trunk
+END
+MSMath.h
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/akiraak-msp-framework/!svn/ver/44/trunk/MSMath.h
+END
+MSGLRenderText.mm
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/akiraak-msp-framework/!svn/ver/47/trunk/MSGLRenderText.mm
+END
+MSAccelerometer.mm
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/akiraak-msp-framework/!svn/ver/49/trunk/MSAccelerometer.mm
+END
+MSGLKeyedSprite.mm
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/akiraak-msp-framework/!svn/ver/59/trunk/MSGLKeyedSprite.mm
+END
+MSGLProgressBar.mm
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/akiraak-msp-framework/!svn/ver/60/trunk/MSGLProgressBar.mm
+END
+MSGLRenderSpriteTriangle.mm
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/akiraak-msp-framework/!svn/ver/1/trunk/MSGLRenderSpriteTriangle.mm
+END
+MSGLRender.h
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/akiraak-msp-framework/!svn/ver/25/trunk/MSGLRender.h
+END
+MSGLTexture.mm
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/akiraak-msp-framework/!svn/ver/61/trunk/MSGLTexture.mm
+END
+MSGLAnim.h
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/akiraak-msp-framework/!svn/ver/16/trunk/MSGLAnim.h
+END
+MSAccelerometer.h
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/akiraak-msp-framework/!svn/ver/46/trunk/MSAccelerometer.h
+END
+MSMath.mm
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/akiraak-msp-framework/!svn/ver/44/trunk/MSMath.mm
+END
+MSList.h
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/akiraak-msp-framework/!svn/ver/16/trunk/MSList.h
+END
+MSGLCamera.h
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/akiraak-msp-framework/!svn/ver/44/trunk/MSGLCamera.h
+END
+NSMutableString+EmailEncoding.h
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/akiraak-msp-framework/!svn/ver/1/trunk/NSMutableString+EmailEncoding.h
+END
+MSGLProgressBar.h
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/akiraak-msp-framework/!svn/ver/55/trunk/MSGLProgressBar.h
+END
+MS.h
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/akiraak-msp-framework/!svn/ver/54/trunk/MS.h
+END
+MSGLButton.mm
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/akiraak-msp-framework/!svn/ver/58/trunk/MSGLButton.mm
+END
+NSMutableString+EmailEncoding.m
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/akiraak-msp-framework/!svn/ver/1/trunk/NSMutableString+EmailEncoding.m
+END
+MSObject.mm
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/akiraak-msp-framework/!svn/ver/54/trunk/MSObject.mm
+END
+MSGLSprite.h
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/akiraak-msp-framework/!svn/ver/55/trunk/MSGLSprite.h
+END
+MSGLAnim.mm
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/akiraak-msp-framework/!svn/ver/60/trunk/MSGLAnim.mm
+END
+MSSubtitle.h
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/akiraak-msp-framework/!svn/ver/1/trunk/MSSubtitle.h
+END
+MSFileManager.mm
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/akiraak-msp-framework/!svn/ver/61/trunk/MSFileManager.mm
+END
+MSList.mm
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/akiraak-msp-framework/!svn/ver/16/trunk/MSList.mm
+END
+MSGLCamera.mm
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/akiraak-msp-framework/!svn/ver/60/trunk/MSGLCamera.mm
+END
+MSGLButton.h
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/akiraak-msp-framework/!svn/ver/54/trunk/MSGLButton.h
+END
+MSGLSprite3D.mm
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/akiraak-msp-framework/!svn/ver/42/trunk/MSGLSprite3D.mm
+END
+MSGLScene.mm
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/akiraak-msp-framework/!svn/ver/61/trunk/MSGLScene.mm
+END
+MSObject.h
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/akiraak-msp-framework/!svn/ver/54/trunk/MSObject.h
+END
+MSSystem.mm
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/akiraak-msp-framework/!svn/ver/42/trunk/MSSystem.mm
+END
+MSGLRenderText.h
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/akiraak-msp-framework/!svn/ver/1/trunk/MSGLRenderText.h
+END
+MSFileManager.h
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/akiraak-msp-framework/!svn/ver/61/trunk/MSFileManager.h
+END
+MSGLKeyedSprite.h
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/akiraak-msp-framework/!svn/ver/54/trunk/MSGLKeyedSprite.h
+END
+MSGLSprite.mm
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/akiraak-msp-framework/!svn/ver/55/trunk/MSGLSprite.mm
+END
+MSSubtitle.mm
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/akiraak-msp-framework/!svn/ver/42/trunk/MSSubtitle.mm
+END
+MSGLRenderSpriteTriangle.h
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/akiraak-msp-framework/!svn/ver/1/trunk/MSGLRenderSpriteTriangle.h
+END
+MSGLSprite3D.h
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/akiraak-msp-framework/!svn/ver/42/trunk/MSGLSprite3D.h
+END
+MSGLScene.h
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/akiraak-msp-framework/!svn/ver/56/trunk/MSGLScene.h
+END
+MSType.h
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/akiraak-msp-framework/!svn/ver/58/trunk/MSType.h
+END
+MSGLTexture.h
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/akiraak-msp-framework/!svn/ver/61/trunk/MSGLTexture.h
+END
+MSGLRender.mm
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/akiraak-msp-framework/!svn/ver/6/trunk/MSGLRender.mm
+END
+MSSystem.h
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/akiraak-msp-framework/!svn/ver/1/trunk/MSSystem.h
+END

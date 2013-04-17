@@ -1,0 +1,106 @@
+#import "ViewerTouchMoveDark.h"
+#import "Scene.h"
+
+#define HIDE_TIME		(300)
+#define COLOR_A_MAX		(0.2f)
+#define COLOR_MAX		(ms::Color4fMake(0.0f, 0.0f, 0.0f, COLOR_A_MAX))
+
+//--------------------------------
+ViewerTouchMoveDark::ViewerTouchMoveDark():
+state((STATE)0),
+sprite(NULL),
+drawFlag(FALSE)
+{
+}
+//--------------------------------
+ViewerTouchMoveDark::~ViewerTouchMoveDark(){
+	MS_SAFE_DELETE(sprite);
+}
+//--------------------------------
+void ViewerTouchMoveDark::init(){
+	ms::Object::init();
+	{
+		ms::GLSprite* object = new ms::GLSprite;
+		ASSERT(object);
+		object->init();
+		object->setVisible(FALSE);
+		object->setColor(COLOR_MAX);
+		object->setSize(ms::Vector2fMake(Scene::SCREEN_SIZE_W, Scene::SCREEN_SIZE_H));
+		ASSERT(!sprite);
+		sprite = object;
+	}
+}
+//--------------------------------
+BOOL ViewerTouchMoveDark::update(ms::Uint32 elapsedTime){
+	BOOL isDraw = drawFlag;
+	drawFlag = FALSE;
+	switch(state){
+		case STATE_HIDE:
+			break;
+		case STATE_HIDE_INIT:
+			timer = 0;
+			state = STATE_HIDE_WAIT;
+			//break;
+		case STATE_HIDE_WAIT:
+			timer += elapsedTime;
+			if(timer >= HIDE_TIME){
+				state = STATE_HIDE;
+				sprite->setVisible(FALSE);
+			}else{
+				ms::Color4f color = COLOR_MAX;
+				color.a = COLOR_A_MAX-(COLOR_A_MAX*timer/HIDE_TIME);
+				sprite->setColor(color);
+				sprite->setVisible(TRUE);
+			}
+			isDraw = TRUE;
+			break;
+		case STATE_SHOW:
+			break;
+/*
+		case STATE_SHOW_INIT:
+		{
+			for(int i = 0; i < ARRAYSIZE(sprite); i++){
+				sprite[area]->setVisible(FALSE);
+			}
+			timer = 0;
+			state = STATE_SHOW;
+			//break;
+		}
+		case STATE_SHOW:
+		{
+			timer += elapsedTime;
+			if(timer >= FLASH_TIME){
+				state = STATE_HIDE;
+				sprite[area]->setVisible(FALSE);
+			}else{
+				ms::Color4f color = sprite[area]->getColor();
+				color.a = COLOR_A_MAX-(COLOR_A_MAX*timer/FLASH_TIME);
+				sprite[area]->setColor(color);
+				sprite[area]->setVisible(TRUE);
+			}
+			isDraw = TRUE;
+			break;
+		}
+*/
+	}
+	return isDraw;
+}
+//--------------------------------
+void ViewerTouchMoveDark::draw(){
+	if(state != STATE_HIDE){
+		sprite->draw();
+	}
+}
+//--------------------------------
+void ViewerTouchMoveDark::setPosRight(float posRight){
+	ms::Vector2f size = sprite->getSize();
+	sprite->setPos(ms::Vector3fMake(posRight-size.x, -Scene::SCREEN_SIZE_H*0.5f, 0.0f));
+	sprite->setColor(COLOR_MAX);
+	sprite->setVisible(TRUE);
+	drawFlag = TRUE;
+	state = STATE_SHOW;
+}
+//--------------------------------
+void ViewerTouchMoveDark::hide(){
+	state = STATE_HIDE_INIT;
+}

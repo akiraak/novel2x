@@ -1,0 +1,7 @@
+"Texture ConfigTitle" = "表示範囲の設定";
+"Add Start Error Title" = "Connection Error";
+"Add Start Error Body" = "There was a problem sending your hearts to the world. Please make sure internet connection is available.";
+"Get Start Error Title" = "Connection Error";
+"Get Start Error Body" = "There was a problem retrieving hearts from the world. Please make sure internet connection is available."; 
+
+

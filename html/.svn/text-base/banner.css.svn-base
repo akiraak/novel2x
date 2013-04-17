@@ -1,0 +1,28 @@
+body {
+  background-color:#000000;
+  font-family:HiraKakuProN-W6;
+}
+#contents {
+  margin-top:4px;
+}
+.content {
+  width:280px;
+  margin:20px 8px;
+}
+
+h1 {
+	font-size:14pt;
+}
+h2 {
+	font-size:12pt;
+}
+div {
+	color:#FFFFFF;
+	font-size:10pt;
+}
+img {
+	border: 0px;
+	margin:8px;
+}
+
+@charset "UTF-8";

@@ -1,0 +1,43 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width />
+  <link rel="stylesheet" type="text/css" href="free_ad.css"/>
+</head>
+<body>
+<div id="contents">
+
+<div class="content">
+	<div>※この画面は無料版のみに表示される広告です</div>
+</div>
+
+<div class="content">
+	<a href="http://itunes.apple.com/jp/app/id351820519?mt=8">
+	<div><img src="nvv1_icon.png" width="280" height="100"></div>
+	<div>購入はこちらから</div>
+	</a>
+</div>
+
+<div class="content">
+	<h1>ご連絡先</h1>
+	<div>バグ報告、要望、はげまし、アプリ開発の依頼、メディア取材、その他ご連絡はこちらからお願いします。</div>
+	<div><a href="mailto:contact@moonshine-project.com?subject=[吾輩の小説]アプリ内から:">contact@moonshine-project.com</a></div>
+</div>
+
+<div class="content">
+	<h1>整形モードで見やすく表示</h1>
+	<div>「整形」を有効にすると文字が見やすく大きく表示されます。</div>
+	<br>
+	<div>[無効]<br><img src="free_ad_ss_cnv_off.jpg"></div>
+	<div>[有効]<br><img src="free_ad_ss_cnv_on.jpg"></div>
+	<div>整形を有効にするには以下の手順が必要です。まず「表示範囲の設定」でページに含まれる章のタイトルやページ番号を範囲外にします。表示範囲に余計な文字が含まれると正しく整形されません。<br><img src="free_ad_area.jpg"></div>
+	<div>その後、読書画面のメニューから「整形」ボタンを押します。<br><img src="free_ad_cnv_menu.jpg"></div>
+	<div>見やすく表示されない場合やイラストページの場合はもう一度「整形」ボタンを押して解除してください。</div>
+</div>
+
+<h1>アプリをもっとゲット</h1>
+<iframe src="http://publicity-apps.moonshine-project.com/series.html?text_color=000000&type=exclude&target_app=NVV&lang=ja" height="10000" style="border:none;margin:0px;padding:0px;" frameborder="0" scrolling=no></iframe>
+
+</div>
+</body>
+</html>

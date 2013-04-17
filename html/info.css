@@ -1,0 +1,27 @@
+body {
+  background-color:transparent;
+  font-family:HiraKakuProN-W6;
+}
+#contents {
+  margin-top:48px;
+}
+.content {
+  width:280px;
+  margin:32px 12px;
+}
+
+h1 {
+	font-size:14pt;
+}
+h2 {
+	font-size:12pt;
+}
+div {
+	font-size:10pt;
+}
+img {
+	border: 1px solid gray;
+	margin:8px;
+}
+
+@charset "UTF-8";

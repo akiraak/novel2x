@@ -1,0 +1,826 @@
+#import "MS.h"
+#import "SceneDebugString.h"
+
+#define TOUCH_TIME		(1500)
+#define POS_Z_MIN		(-1000.0f)
+#define POS_Z_MID		(-2000.0f)
+#define POS_Z_MAX		(-3000.0f)
+#define ZOOM_SPEED		(10000.0f)
+#define SQRTF(a, b)		(sqrtf((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y)))
+#define ZOOM_TIME		(500)
+#define ROT_ANIM_TIME	(300)
+
+namespace ms {
+	//--------------------------------
+	float GLCamera::zoomLevelValueDefault[] = {POS_Z_MIN, POS_Z_MID, POS_Z_MAX};
+	
+	//--------------------------------
+	GLCamera::GLCamera():
+	state((STATE)0),
+	controlFlagBit(0),
+	scene(NULL),
+	touchStartTime(0),
+	touchStartPos(ms::Vector2nMake(0, 0)),
+	touchNowPos(ms::Vector2nMake(0, 0)),
+	touchGapPos(ms::Vector2nMake(0, 0)),
+	throwSpeed(ms::Vector2fMake(0.0f, 0.0f)),
+	stopSpeed(ms::Vector2fMake(0.0f, 0.0f)),
+	cameraUpdate(FALSE),
+	moveLimit(FALSE),
+	moveRect(ms::RectMake(0.0f, 0.0f, 0.0f, 0.0f)),
+	touchRect((ms::RectMake(0.0f, 0.0f, ms::GLScene::SCREEN_SIZE_H, ms::GLScene::SCREEN_SIZE_H))),
+	zoomLevel(ZOOM_LEVEL_COUNT-1),
+	zoomStart(ms::Vector3fMake(0.0f, 0.0f, 0.0f)),
+	zoomEnd(ms::Vector3fMake(0.0f, 0.0f, 0.0f)),
+	zoomTargetPos(ms::Vector3fMake(0.0f, 0.0f, 0.0f)),
+	multiTouchZoomFirstLen(0.0f),
+	multiTouchZoomFirstZ(0.0f),
+	upDir((UP_DIR)0),
+	rotAnimStartZ(0.0f),
+	rotAnimEndZ(0.0f),
+	rotAnimNowZ(0.0f)
+	{
+		enableControlFlag(CONTROL_FLAG_MOVE_V);
+		enableControlFlag(CONTROL_FLAG_MOVE_H);
+		enableControlFlag(CONTROL_FLAG_TOUCH_ZOOM);
+		enableControlFlag(CONTROL_FLAG_PINCH_ZOOM);
+		
+		memcpy(zoomLevelValue, zoomLevelValueDefault, sizeof(zoomLevelValue));
+		memset(multiTouchInfo, 0, sizeof(multiTouchInfo));
+		bzero(&rotAnimStartMat, sizeof(rotAnimStartMat));
+	}
+	//--------------------------------
+	GLCamera::~GLCamera(){
+	}
+	//--------------------------------
+	void GLCamera::init(){
+		ms::Object::init();
+		state = (STATE)0;
+		touchStartTime = 0;
+		touchStartPos = ms::Vector2nMake(0, 0);
+		touchNowPos = ms::Vector2nMake(0, 0);
+		touchGapPos = ms::Vector2nMake(0, 0);
+		throwSpeed = ms::Vector2fMake(0.0f, 0.0f);
+		stopSpeed = ms::Vector2fMake(0.0f, 0.0f);
+		cameraUpdate = FALSE;
+		moveRect = ms::RectMake(0.0f, 0.0f, 0.0f, 0.0f);
+		zoomLevel = ZOOM_LEVEL_COUNT-1;
+		multiTouchZoomFirstLen = 0.0f;
+		multiTouchZoomFirstZ = 0.0f;		
+		ms::Matrix::identity(matCamera);
+		matCamera.m[3][2] = zoomLevelValue[zoomLevel];
+	}
+	//--------------------------------
+	void GLCamera::cleanPos(){
+		matCamera.m[3][0] = 0.0f;
+		matCamera.m[3][1] = 0.0f;
+		matCamera.m[3][2] = zoomLevelValue[2];
+	}
+	//--------------------------------
+	void GLCamera::setScreenSize(const ms::Vector2f& inScreenSize){
+		ms::Vector2n screenSize = scene->getScreenSize();
+		ms::Vector2f ratio = ms::Vector2fMake(inScreenSize.x/(float)screenSize.x, inScreenSize.y/(float)screenSize.y);
+		float ratioScreen = (float)screenSize.x/(float)screenSize.y;
+		float ratioInScreen = (float)inScreenSize.x/(float)inScreenSize.y;
+		if(ratioScreen < ratioInScreen){
+			// 横幅をいっぱいに揃える
+			zoomLevelValue[2] = zoomLevelValue[0]*ratio.x;
+		}else{
+			// 縦幅をいっぱいに揃える
+			zoomLevelValue[2] = zoomLevelValue[0]*ratio.y;
+		
+		}
+		if(zoomLevelValue[2] > zoomLevelValue[0]){
+			zoomLevelValue[2] = zoomLevelValue[0];
+		}
+		zoomLevelValue[1] = (zoomLevelValue[0]+zoomLevelValue[2])/2.0f;
+		}
+	//--------------------------------
+	void GLCamera::cleanScreenSize(){
+		memcpy(zoomLevelValue, zoomLevelValueDefault, sizeof(zoomLevelValue));
+	}
+	//--------------------------------
+	BOOL GLCamera::update(ms::Uint32 elapsedTime){
+		BOOL isDraw = FALSE;
+#if 1
+		switch(state){
+			case STATE_INIT:
+				state = STATE_DISABLE;
+				//break;
+			case STATE_DISABLE:
+				break;
+			case STATE_IDLE:
+				break;
+			case STATE_MOVE:
+				if(cameraUpdate){
+					switch(upDir){
+						case UP_DIR_UP:
+							if(getControlFlag(CONTROL_FLAG_MOVE_V)){
+								matCamera.m[3][0] += touchGapPos.x * (matCamera.m[3][2] / zoomLevelValue[0]);
+							}
+							if(getControlFlag(CONTROL_FLAG_MOVE_H)){
+								matCamera.m[3][1] += touchGapPos.y * (matCamera.m[3][2] / zoomLevelValue[0]);
+							}
+							break;
+						case UP_DIR_DOWN:
+							if(getControlFlag(CONTROL_FLAG_MOVE_V)){
+								matCamera.m[3][0] -= touchGapPos.x * (matCamera.m[3][2] / zoomLevelValue[0]);
+							}
+							if(getControlFlag(CONTROL_FLAG_MOVE_H)){
+								matCamera.m[3][1] -= touchGapPos.y * (matCamera.m[3][2] / zoomLevelValue[0]);
+							}
+							break;
+						case UP_DIR_LEFT:
+							if(getControlFlag(CONTROL_FLAG_MOVE_H)){
+								matCamera.m[3][0] += touchGapPos.y * (matCamera.m[3][2] / zoomLevelValue[0]);
+							}
+							if(getControlFlag(CONTROL_FLAG_MOVE_V)){
+								matCamera.m[3][1] -= touchGapPos.x * (matCamera.m[3][2] / zoomLevelValue[0]);
+							}
+							break;
+						case UP_DIR_RIGHT:
+							if(getControlFlag(CONTROL_FLAG_MOVE_H)){
+								matCamera.m[3][0] -= touchGapPos.y * (matCamera.m[3][2] / zoomLevelValue[0]);
+							}
+							if(getControlFlag(CONTROL_FLAG_MOVE_V)){
+								matCamera.m[3][1] += touchGapPos.x * (matCamera.m[3][2] / zoomLevelValue[0]);
+							}
+							break;
+                        default:
+                            break;
+					}
+					isDraw = TRUE;
+					cameraUpdate = FALSE;
+				}
+				break;
+			case STATE_ZOOM_INIT:
+				timer = 0;
+				zoomLevel--;
+				if(zoomLevel < 0){
+					zoomLevel = ZOOM_LEVEL_COUNT-1;
+				}
+				zoomStart = ms::Vector3fMake(matCamera.m[3][0], matCamera.m[3][1], matCamera.m[3][2]);
+				zoomEnd.z = zoomLevelValue[zoomLevel];
+				state = STATE_ZOOM;
+				//break;
+			case STATE_ZOOM:
+				timer += elapsedTime;
+				if(timer >= ZOOM_TIME){
+					timer = ZOOM_TIME;
+					state = STATE_IDLE;
+				}
+				matCamera.m[3][0] = zoomStart.x+((zoomEnd.x-zoomStart.x)*timer/ZOOM_TIME);
+				matCamera.m[3][1] = zoomStart.y+((zoomEnd.y-zoomStart.y)*timer/ZOOM_TIME);
+				matCamera.m[3][2] = zoomStart.z+((zoomEnd.z-zoomStart.z)*timer/ZOOM_TIME);
+				cameraUpdate = FALSE;
+				isDraw = TRUE;
+				break;
+			case STATE_ZOOM_TARGET_INIT:
+				timer = 0;
+				zoomStart = ms::Vector3fMake(matCamera.m[3][0], matCamera.m[3][1], matCamera.m[3][2]);
+				zoomEnd = zoomTargetPos;
+				state = STATE_ZOOM_TARGET;
+				//break;
+			case STATE_ZOOM_TARGET:
+			{
+				timer += elapsedTime;
+				if(timer >= ZOOM_TIME){
+					timer = ZOOM_TIME;
+					state = STATE_IDLE;
+				}
+				matCamera.m[3][0] = zoomStart.x+((zoomEnd.x-zoomStart.x)*timer/ZOOM_TIME);
+				matCamera.m[3][1] = zoomStart.y+((zoomEnd.y-zoomStart.y)*timer/ZOOM_TIME);
+				matCamera.m[3][2] = zoomStart.z+((zoomEnd.z-zoomStart.z)*timer/ZOOM_TIME);
+				updateZoomLevel();
+				cameraUpdate = FALSE;
+				isDraw = TRUE;
+				break;
+			}
+			case STATE_ZOOM_MULTITOUCH_INIT:				
+				if(getControlFlag(CONTROL_FLAG_PINCH_ZOOM) &&
+				   multiTouchInfo[0].touch != NULL &&
+				   multiTouchInfo[1].touch != NULL)
+				{
+					multiTouchZoomFirstLen = SQRTF(multiTouchInfo[0].pos, multiTouchInfo[1].pos);
+					multiTouchZoomFirstZ = matCamera.m[3][2];
+					state = STATE_ZOOM_MULTITOUCH;
+					//break;
+				}else{
+					state = STATE_MOVE;
+					break;
+				}
+			case STATE_ZOOM_MULTITOUCH:
+			{
+				if(multiTouchInfo[0].touch != NULL && multiTouchInfo[1].touch != NULL){
+					float len = SQRTF(multiTouchInfo[0].pos, multiTouchInfo[1].pos);
+					float z = multiTouchZoomFirstZ / (len / multiTouchZoomFirstLen);
+					if(z > zoomLevelValue[0]){
+						z = zoomLevelValue[0];
+					}
+					if(z < zoomLevelValue[2]){
+						z = zoomLevelValue[2];
+					}
+					matCamera.m[3][2] = z;
+					updateZoomLevel();
+					cameraUpdate = FALSE;
+					isDraw = TRUE;
+					break;
+				}else{
+					state = STATE_MOVE;
+					break;
+				}
+			}
+			case STATE_THROW:
+			{
+				ms::Vector2f speed = ms::Vector2fMake(0.0f, 0.0f);
+				speed.x = throwSpeed.x * (matCamera.m[3][2] / zoomLevelValue[0]) / 1000.0f * elapsedTime;
+				speed.y = throwSpeed.y * (matCamera.m[3][2] / zoomLevelValue[0]) / 1000.0f * elapsedTime;
+				
+				if(upDir == UP_DIR_UP || upDir == UP_DIR_DOWN){
+					if(getControlFlag(CONTROL_FLAG_MOVE_V)){
+						matCamera.m[3][0] += speed.x;
+					}
+					if(getControlFlag(CONTROL_FLAG_MOVE_H)){
+						matCamera.m[3][1] += speed.y;
+					}
+				}else{
+					if(getControlFlag(CONTROL_FLAG_MOVE_H)){
+						matCamera.m[3][0] += speed.x;
+					}
+					if(getControlFlag(CONTROL_FLAG_MOVE_V)){
+						matCamera.m[3][1] += speed.y;
+					}
+				}
+				
+				// 減速
+#define STOP_SPEED_X (stopSpeed.x * elapsedTime / 1000.0f)
+#define STOP_SPEED_Y (stopSpeed.y * elapsedTime / 1000.0f)
+				if(throwSpeed.x > 0.0f){
+					throwSpeed.x -= STOP_SPEED_X;
+					if(throwSpeed.x < 0.0f){
+						throwSpeed.x = 0.0f;
+					}
+				}else{
+					throwSpeed.x += STOP_SPEED_X;
+					if(throwSpeed.x > 0.0f){
+						throwSpeed.x = 0.0f;
+					}
+				}
+				if(throwSpeed.y > 0.0f){
+					throwSpeed.y -= STOP_SPEED_Y;
+					if(throwSpeed.y < 0.0f){
+						throwSpeed.y = 0.0f;
+					}
+				}else{
+					throwSpeed.y += STOP_SPEED_Y;
+					if(throwSpeed.y > 0.0f){
+						throwSpeed.y = 0.0f;
+					}
+				}
+				if(throwSpeed.x == 0.0f && throwSpeed.y == 0.0f){
+					state = STATE_IDLE;
+				}
+				cameraUpdate = FALSE;
+				isDraw = TRUE;
+				break;
+			}
+			case STATE_CHANGE_UP_DIR_INIT:
+			{
+				ms::Matrix::identity(rotAnimStartMat);
+				rotAnimStartMat.m[3][0] = matCamera.m[3][0];
+				rotAnimStartMat.m[3][1] = matCamera.m[3][1];
+				rotAnimStartMat.m[3][2] = matCamera.m[3][2];
+				static float rotEnd[]={
+					0.0f,
+					180.0f,
+					90.0f,
+					270.0f,
+				};
+				ASSERT(upDir >= (UP_DIR)0 && upDir < UP_DIR_COUNT);
+				rotAnimStartZ = rotAnimNowZ;
+				rotAnimEndZ = rotEnd[upDir];				
+				if(rotAnimEndZ > (rotAnimStartZ+180.0f)){
+					rotAnimStartZ = 360.0f+rotAnimStartZ;
+				}else if(rotAnimEndZ < (rotAnimStartZ-180.0f)){
+					rotAnimStartZ = -(360.0f-rotAnimStartZ);
+				}
+				timer = 0;
+				state = STATE_CHANGE_UP_DIR;
+				//break;
+			}
+			case STATE_CHANGE_UP_DIR:
+			{
+				timer += elapsedTime;
+				if(timer >= ROT_ANIM_TIME){
+					timer = ROT_ANIM_TIME;
+					
+					NOTIFY_CHANGE_UP_DIR_INFO info;
+					bzero(&info, sizeof(info));
+					info.upDir = upDir;
+					sendChildNotifyMessage(NOTIFY_CHANGE_UP_DIR, &info);
+					state = STATE_IDLE;
+				}
+				ASSERT(rotAnimEndZ >= 0.0f);
+				rotAnimNowZ = rotAnimStartZ+((rotAnimEndZ-rotAnimStartZ)*timer/ROT_ANIM_TIME);
+				if(rotAnimNowZ < 0.0f){
+					rotAnimNowZ += 360.0f;
+				}else if(rotAnimNowZ > 360.0f){
+					rotAnimNowZ -= 360.0f;
+				}
+				
+				float rad = ANG2RAD(rotAnimNowZ);
+				ms::Matrixf mat = rotAnimStartMat;
+				ms::Matrixf matRot;
+				ms::Matrix::rotateZ(matRot, rad);
+				ms::Matrix::mult(mat, matRot);
+				matCamera = mat;
+				isDraw = TRUE;
+				break;
+			}
+		}
+		// 移動範囲制限
+		{
+			switch(upDir){
+				case UP_DIR_UP:
+					if(moveLimit && -matCamera.m[3][0] < moveRect.pos.x){
+						matCamera.m[3][0] = -moveRect.pos.x;
+					}
+					if(moveLimit && -matCamera.m[3][0] > moveRect.pos.x+moveRect.size.x){
+						matCamera.m[3][0] = -(moveRect.pos.x+moveRect.size.x);
+					}
+					if(moveLimit && -matCamera.m[3][1] < moveRect.pos.y){
+						matCamera.m[3][1] = -moveRect.pos.y;
+					}
+					if(moveLimit && -matCamera.m[3][1] > moveRect.pos.y+moveRect.size.y){
+						matCamera.m[3][1] = -(moveRect.pos.y+moveRect.size.y);
+					}
+					break;
+				case UP_DIR_DOWN:
+					if(moveLimit && matCamera.m[3][0] < moveRect.pos.x){
+						matCamera.m[3][0] = moveRect.pos.x;
+					}
+					if(moveLimit && matCamera.m[3][0] > moveRect.pos.x+moveRect.size.x){
+						matCamera.m[3][0] = (moveRect.pos.x+moveRect.size.x);
+					}
+					if(moveLimit && -matCamera.m[3][1] < moveRect.pos.y){
+						matCamera.m[3][1] = -moveRect.pos.y;
+					}
+					if(moveLimit && -matCamera.m[3][1] > moveRect.pos.y+moveRect.size.y){
+						matCamera.m[3][1] = -(moveRect.pos.y+moveRect.size.y);
+					}
+					break;
+				case UP_DIR_LEFT:
+					if(moveLimit && -matCamera.m[3][0] < moveRect.pos.y){
+						matCamera.m[3][0] = -moveRect.pos.y;
+					}
+					if(moveLimit && -matCamera.m[3][0] > moveRect.pos.y+moveRect.size.y){
+						matCamera.m[3][0] = -(moveRect.pos.y+moveRect.size.y);
+					}
+					if(moveLimit && matCamera.m[3][1] < moveRect.pos.x){
+						matCamera.m[3][1] = moveRect.pos.x;
+					}
+					if(moveLimit && matCamera.m[3][1] > moveRect.pos.x+moveRect.size.x){
+						matCamera.m[3][1] = (moveRect.pos.x+moveRect.size.x);
+					}
+					break;
+				case UP_DIR_RIGHT:
+					if(moveLimit && -matCamera.m[3][0] < moveRect.pos.y){
+						matCamera.m[3][0] = -moveRect.pos.y;
+					}
+					if(moveLimit && -matCamera.m[3][0] > moveRect.pos.y+moveRect.size.y){
+						matCamera.m[3][0] = -(moveRect.pos.y+moveRect.size.y);
+					}
+					if(moveLimit && -matCamera.m[3][1] < moveRect.pos.x){
+						matCamera.m[3][1] = -moveRect.pos.x;
+					}
+					if(moveLimit && -matCamera.m[3][1] > moveRect.pos.x+moveRect.size.x){
+						matCamera.m[3][1] = -(moveRect.pos.x+moveRect.size.x);
+					}
+					break;
+                default:
+                    break;
+			}
+		}
+#endif
+		return isDraw;
+	}
+	//--------------------------------
+	void GLCamera::touchesBegan(const ms::Vector2f* touchPos, ms::Uint32 touchCount, NSSet* touches, UIEvent* event){
+		if(state != STATE_DISABLE &&
+		   state != STATE_CHANGE_UP_DIR)
+		{
+			ms::Vector2f cameraTouchPos[ms::GLScene::TOUCH_MAX];
+			ms::Uint32 cameraTouchCount = 0;
+			
+			// 操作範囲の制限
+			for(int i = 0; i < touchCount; i++){
+				if(touchPos[i].x >= touchRect.pos.x &&
+				   touchPos[i].x < touchRect.pos.x+touchRect.size.x &&
+				   touchPos[i].y >= touchRect.pos.y &&
+				   touchPos[i].y < touchRect.pos.y+touchRect.size.y)
+				{
+					cameraTouchPos[cameraTouchCount] = touchPos[i];
+					cameraTouchCount++;
+				}
+			}
+			
+			ASSERT(scene);
+			NSArray* allTouches = [touches allObjects];
+			ms::Sint32 firstTouchIndex = -1;
+			BOOL multiTouch = TRUE;
+			
+			// オブジュエクトと座標を取得
+			for(int i = 0; i < cameraTouchCount; i++){
+				ms::Sint32 setIndex = -1;
+				UITouch *touch = [allTouches objectAtIndex:i];
+				// 同じオブジェクトを検索
+				for(int j = 0; j < ARRAYSIZE(multiTouchInfo); j++){
+					if(multiTouchInfo[j].touch == touch){
+						setIndex = j;
+						break;
+					}
+				}
+				// 空き場所を検索
+				if(setIndex == -1){
+					for(int j = 0; j < ARRAYSIZE(multiTouchInfo); j++){
+						if(multiTouchInfo[j].touch == NULL){
+							setIndex = j;
+							break;
+						}
+					}
+				}
+				if(setIndex == -1){
+					setIndex = 0;
+				}
+				ASSERT(setIndex >= 0 && setIndex < ARRAYSIZE(multiTouchInfo));
+				multiTouchInfo[setIndex].touch = touch;
+				multiTouchInfo[setIndex].pos = cameraTouchPos[i];
+				if(i == 0){
+					firstTouchIndex = setIndex;
+				}
+			}
+			// マルチタッチ判定
+			for(int i = 0; i < ARRAYSIZE(multiTouchInfo); i++){
+				if(multiTouchInfo[i].touch == NULL){
+					multiTouch = FALSE;
+				}
+			}
+			if(multiTouch){
+				state = STATE_ZOOM_MULTITOUCH_INIT;
+			}else{
+				touchStartTime = ms::getTime();
+				touchStartPos = ms::Vector2nMake(cameraTouchPos[firstTouchIndex].x, cameraTouchPos[firstTouchIndex].y);
+				touchNowPos = touchStartPos;
+				touchGapPos = ms::Vector2nMake(0, 0);
+				state = STATE_MOVE;
+			}
+		}
+	}
+	//--------------------------------
+	void GLCamera::touchesMoved(const ms::Vector2f* touchPos, ms::Uint32 touchCount, NSSet* touches, UIEvent* event){
+		if(state != STATE_DISABLE &&
+		   state != STATE_CHANGE_UP_DIR)
+		{
+			ms::Vector2f cameraTouchPos[ms::GLScene::TOUCH_MAX];
+			ms::Uint32 cameraTouchCount = 0;
+			
+			// 操作範囲の制限
+			for(int i = 0; i < touchCount; i++){
+				if(touchPos[i].x >= touchRect.pos.x &&
+				   touchPos[i].x < touchRect.pos.x+touchRect.size.x &&
+				   touchPos[i].y >= touchRect.pos.y &&
+				   touchPos[i].y < touchRect.pos.y+touchRect.size.y)
+				{
+					cameraTouchPos[cameraTouchCount] = touchPos[i];
+					cameraTouchCount++;
+				}
+			}
+			
+			ASSERT(scene);
+			NSArray* allTouches = [touches allObjects];
+			ms::Sint32 firstTouchIndex = -1;
+			BOOL multiTouch = TRUE;
+			
+			// オブジュエクトと座標を取得
+			for(int i = 0; i < cameraTouchCount; i++){
+				ms::Sint32 setIndex = -1;
+				UITouch *touch = [allTouches objectAtIndex:i];
+				// 同じオブジェクトを検索
+				for(int j = 0; j < ARRAYSIZE(multiTouchInfo); j++){
+					if(multiTouchInfo[j].touch == touch){
+						setIndex = j;
+						break;
+					}
+				}
+				// 空き場所を検索
+				if(setIndex == -1){
+					for(int j = 0; j < ARRAYSIZE(multiTouchInfo); j++){
+						if(multiTouchInfo[j].touch == NULL){
+							setIndex = j;
+							break;
+						}
+					}
+				}
+				if(setIndex == -1){
+					setIndex = 0;
+				}
+				ASSERT(setIndex >= 0 && setIndex < ARRAYSIZE(multiTouchInfo));
+				multiTouchInfo[setIndex].touch = touch;
+				multiTouchInfo[setIndex].pos = cameraTouchPos[i];
+				if(i == 0){
+					firstTouchIndex = setIndex;
+				}
+			}
+			// マルチタッチ判定
+			for(int i = 0; i < ARRAYSIZE(multiTouchInfo); i++){
+				if(multiTouchInfo[i].touch == NULL){
+					multiTouch = FALSE;
+				}
+			}
+			if(state == STATE_MOVE){
+				if(!multiTouch){
+					ASSERT(scene);
+					ms::Vector2n prevPos = touchNowPos;
+					touchNowPos = ms::Vector2nMake(cameraTouchPos[firstTouchIndex].x, cameraTouchPos[firstTouchIndex].y);
+					touchGapPos = ms::Vector2nMake(touchNowPos.x-prevPos.x, touchNowPos.y-prevPos.y);
+					cameraUpdate = TRUE;
+				}
+			}
+		}
+	}
+	//--------------------------------
+	void GLCamera::touchesEnded(const ms::Vector2f* touchPos, ms::Uint32 touchCount, NSSet* touches, UIEvent* event){
+		if(state != STATE_DISABLE &&
+		   state != STATE_CHANGE_UP_DIR)
+		{
+			ms::Vector2f cameraTouchPos[ms::GLScene::TOUCH_MAX];
+			ms::Uint32 cameraTouchCount = 0;
+			
+			// 操作範囲の制限
+			for(int i = 0; i < touchCount; i++){
+				if(touchPos[i].x >= touchRect.pos.x &&
+				   touchPos[i].x < touchRect.pos.x+touchRect.size.x &&
+				   touchPos[i].y >= touchRect.pos.y &&
+				   touchPos[i].y < touchRect.pos.y+touchRect.size.y)
+				{
+					cameraTouchPos[cameraTouchCount] = touchPos[i];
+					cameraTouchCount++;
+				}
+			}
+			
+			ASSERT(scene);
+			NSArray* allTouches = [touches allObjects];
+			BOOL multiTouch = TRUE;
+			
+			// マルチタッチ判定
+			for(int i = 0; i < ARRAYSIZE(multiTouchInfo); i++){
+				if(multiTouchInfo[i].touch == NULL){
+					multiTouch = FALSE;
+				}
+			}
+			if(state == STATE_MOVE &&
+			   !multiTouch)
+			{
+				ms::Vector2n gapFromStartPos = ms::Vector2nMake(cameraTouchPos[0].x-touchStartPos.x, cameraTouchPos[0].y-touchStartPos.y);
+				ms::Uint32 gapFromStartTime = ms::getTime() - touchStartTime;
+				touchStartTime = 0;
+				if(ABS(gapFromStartPos.x) < 20 && ABS(gapFromStartPos.y) < 20 && gapFromStartTime <= TOUCH_TIME){
+					// 画面タッチ
+					ASSERT(scene);
+					ms::Vector2n screenSize = scene->getScreenSize();
+					ms::Vector2f gap = ms::Vector2fMake(touchStartPos.x-(screenSize.x/2.0f), touchStartPos.y-(screenSize.y/2.0f));
+					switch(upDir){
+						case UP_DIR_UP:
+							zoomEnd.x = matCamera.m[3][0]-(gap.x*matCamera.m[3][2]/zoomLevelValue[0]);
+							zoomEnd.y = matCamera.m[3][1]-(gap.y*matCamera.m[3][2]/zoomLevelValue[0]);				
+							break;
+						case UP_DIR_DOWN:
+							zoomEnd.x = matCamera.m[3][0]+(gap.x*matCamera.m[3][2]/zoomLevelValue[0]);
+							zoomEnd.y = matCamera.m[3][1]+(gap.y*matCamera.m[3][2]/zoomLevelValue[0]);
+							break;
+						case UP_DIR_LEFT:
+							zoomEnd.x = matCamera.m[3][0]-(gap.y*matCamera.m[3][2]/zoomLevelValue[0]);
+							zoomEnd.y = matCamera.m[3][1]+(gap.x*matCamera.m[3][2]/zoomLevelValue[0]);
+							break;
+						case UP_DIR_RIGHT:
+							zoomEnd.x = matCamera.m[3][0]+(gap.y*matCamera.m[3][2]/zoomLevelValue[0]);
+							zoomEnd.y = matCamera.m[3][1]-(gap.x*matCamera.m[3][2]/zoomLevelValue[0]);
+							break;
+                        default:
+                            break;
+					}
+					//state = STATE_IDLE;
+					NOTIFY_TOUCH_INFO info;
+					memset(&info, 0, sizeof(info));
+					switch(upDir){
+						case UP_DIR_UP:
+							info.pos = ms::Vector2fMake(-zoomEnd.x, -zoomEnd.y);
+							break;
+						case UP_DIR_DOWN:
+							info.pos = ms::Vector2fMake(zoomEnd.x, zoomEnd.y);
+							break;
+						case UP_DIR_LEFT:
+							info.pos = ms::Vector2fMake(zoomEnd.y, -zoomEnd.x);
+							break;
+						case UP_DIR_RIGHT:
+							info.pos = ms::Vector2fMake(-zoomEnd.y, zoomEnd.x);
+							break;
+                        default:
+                            break;
+					}
+					info.zoomMax = (matCamera.m[3][2] == zoomLevelValue[0])? TRUE: FALSE;
+					sendChildNotifyMessage(NOTIFY_TOUCH, &info);
+				}else{
+					if(ABS(touchGapPos.x) > 1.0f || ABS(touchGapPos.y) > 1.0f){
+						switch(upDir){
+							case UP_DIR_UP:
+								throwSpeed.x = touchGapPos.x * 20.0f;
+								throwSpeed.y = touchGapPos.y * 20.0f;
+								break;
+							case UP_DIR_DOWN:
+								throwSpeed.x = -touchGapPos.x * 20.0f;
+								throwSpeed.y = -touchGapPos.y * 20.0f;
+								break;
+							case UP_DIR_LEFT:
+								throwSpeed.x = touchGapPos.y * 20.0f;
+								throwSpeed.y = -touchGapPos.x * 20.0f;
+								break;
+							case UP_DIR_RIGHT:
+								throwSpeed.x = -touchGapPos.y * 20.0f;
+								throwSpeed.y = touchGapPos.x * 20.0f;
+								break;
+                            default:
+                                break;
+						}
+						//throwSpeed.x = touchGapPos.x * 20.0f;
+						//throwSpeed.y = touchGapPos.y * 20.0f;
+						stopSpeed = ms::Vector2fMake(ABS(touchGapPos.x*20.0f), ABS(touchGapPos.y*20.0f));
+						state = STATE_THROW;
+					}
+					touchStartPos = ms::Vector2nMake(0.0f, 0.0f);
+					touchNowPos = touchStartPos;
+					touchGapPos = ms::Vector2nMake(0.0f, 0.0f);
+				}
+			}
+			else if(state == STATE_ZOOM_MULTITOUCH){
+				state = STATE_IDLE;
+			}
+			// オブジュエクトの削除
+			for(int i = 0; i < cameraTouchCount; i++){
+				UITouch *touch = [allTouches objectAtIndex:i];
+				// 同じオブジェクトを検索
+				for(int j = 0; j < ARRAYSIZE(multiTouchInfo); j++){
+					if(multiTouchInfo[j].touch == touch){
+						multiTouchInfo[j].touch = NULL;
+						multiTouchInfo[j].pos = ms::Vector2fMake(0.0f, 0.0f);
+					}
+				}
+			}
+		}
+	}
+	//--------------------------------
+	void GLCamera::touchesCancelled(const ms::Vector2f* touchPos, ms::Uint32 touchCount, NSSet* touches, UIEvent* event){
+		ms::Vector2f cameraTouchPos[ms::GLScene::TOUCH_MAX];
+		ms::Uint32 cameraTouchCount = 0;
+		
+		// 操作範囲の制限
+		for(int i = 0; i < touchCount; i++){
+			if(touchPos[i].x >= touchRect.pos.x &&
+			   touchPos[i].x < touchRect.pos.x+touchRect.size.x &&
+			   touchPos[i].y >= touchRect.pos.y &&
+			   touchPos[i].y < touchRect.pos.y+touchRect.size.y)
+			{
+				cameraTouchPos[cameraTouchCount] = touchPos[i];
+				cameraTouchCount++;
+			}
+		}
+		
+		touchesEnded(cameraTouchPos, cameraTouchCount, touches, event);
+	}
+	//--------------------------------
+	void GLCamera::setMoveRect(const ms::Rect& rc){
+		moveRect = rc;
+		moveLimit = TRUE;
+	}
+	//--------------------------------
+	void GLCamera::setTouchRect(const ms::Rect& rc){
+		touchRect = rc;
+	}
+	//--------------------------------
+	void GLCamera::enableMove(){
+		state = STATE_IDLE;
+	}
+	//--------------------------------
+	void GLCamera::startZoom(){
+		if(getControlFlag(CONTROL_FLAG_TOUCH_ZOOM)){
+			state = STATE_ZOOM_INIT;
+		}
+	}
+	//--------------------------------
+	void GLCamera::startZoomTargetPos(Vector2f& pos){
+		switch(upDir){
+			case UP_DIR_UP:
+				zoomTargetPos.x = -pos.x;
+				zoomTargetPos.y = -pos.y;
+				break;
+			case UP_DIR_DOWN:
+				zoomTargetPos.x = pos.x;
+				zoomTargetPos.y = pos.y;
+				break;
+			case UP_DIR_LEFT:
+				zoomTargetPos.x = -pos.y;
+				zoomTargetPos.y = +pos.x;
+				break;
+			case UP_DIR_RIGHT:
+				zoomTargetPos.x = +pos.y;
+				zoomTargetPos.y = -pos.x;
+				break;
+            default:
+                break;
+		}
+		zoomTargetPos.z = zoomLevelValue[0];
+		state = STATE_ZOOM_TARGET_INIT;
+	}
+	//--------------------------------
+	void GLCamera::setPos(Vector2f& pos){
+		switch(upDir){
+			case UP_DIR_UP:
+				matCamera.m[3][0] = -pos.x;
+				matCamera.m[3][1] = -pos.y;
+				break;
+			case UP_DIR_DOWN:
+				matCamera.m[3][0] = pos.x;
+				matCamera.m[3][1] = pos.y;
+				break;
+			case UP_DIR_LEFT:
+				matCamera.m[3][0] = -pos.y;
+				matCamera.m[3][1] = +pos.x;
+				break;
+			case UP_DIR_RIGHT:
+				matCamera.m[3][0] = +pos.y;
+				matCamera.m[3][1] = -pos.x;
+				break;
+            default:
+                break;
+		}
+		//matCamera.m[3][2] = zoomLevelValue[0];
+	}
+	//--------------------------------
+	ms::Vector2f GLCamera::getPos(){
+		ms::Vector2f pos;
+		switch(upDir){
+			case UP_DIR_UP:
+				pos.x = -matCamera.m[3][0];
+				pos.y = -matCamera.m[3][1];
+				break;
+			case UP_DIR_DOWN:
+				pos.x = matCamera.m[3][0] = pos.x;
+				pos.x = matCamera.m[3][1] = pos.y;
+				break;
+			case UP_DIR_LEFT:
+				pos.x = -matCamera.m[3][0];
+				pos.x = matCamera.m[3][1];
+				break;
+			case UP_DIR_RIGHT:
+				pos.x = matCamera.m[3][0];
+				pos.x = -matCamera.m[3][1];
+				break;
+            default:
+                break;
+		}
+		return pos;
+	}
+	//--------------------------------
+	void GLCamera::enableControlFlag(CONTROL_FLAG _controlFlag){
+		ASSERT(_controlFlag >= 0 && _controlFlag < CONTROL_FLAG_COUNT);
+		controlFlagBit = controlFlagBit | (1<<_controlFlag);
+	}
+	//--------------------------------
+	void GLCamera::disableControlFlag(CONTROL_FLAG _controlFlag){
+		ASSERT(_controlFlag >= 0 && _controlFlag < CONTROL_FLAG_COUNT);
+		controlFlagBit = controlFlagBit & ~(1<<_controlFlag);
+	}
+	//--------------------------------
+	void GLCamera::updateZoomLevel(){
+		int setLevel = -1;
+		for(int i = 0; i < ARRAYSIZE(zoomLevelValue); i++){
+			if(zoomLevelValue[i] <= matCamera.m[3][2]){
+				setLevel = i;
+				break;
+			}
+		}
+		ASSERT(setLevel >= 0 && setLevel < ARRAYSIZE(zoomLevelValue));
+		zoomLevel = setLevel;
+	}
+	//--------------------------------
+	BOOL GLCamera::setUpDir(UP_DIR _upDir){
+		if(state != STATE_DISABLE){
+			if(upDir != _upDir){
+				upDir = _upDir;
+				state = STATE_CHANGE_UP_DIR_INIT;
+				return TRUE;
+			}
+		}
+		return FALSE;
+	}
+}	

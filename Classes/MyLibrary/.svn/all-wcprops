@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/msp-nvv1/!svn/ver/23/trunk/source/iPhone/Classes/MyLibrary
+END
+MyLibrary.h
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/msp-nvv1/!svn/ver/22/trunk/source/iPhone/Classes/MyLibrary/MyLibrary.h
+END
+MyLibrary.mm
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/msp-nvv1/!svn/ver/22/trunk/source/iPhone/Classes/MyLibrary/MyLibrary.mm
+END
+MyLibraryBanner.h
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/msp-nvv1/!svn/ver/7/trunk/source/iPhone/Classes/MyLibrary/MyLibraryBanner.h
+END
+MyLibraryEdit.h
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/msp-nvv1/!svn/ver/17/trunk/source/iPhone/Classes/MyLibrary/MyLibraryEdit.h
+END
+MyLibraryUnzip.h
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/msp-nvv1/!svn/ver/23/trunk/source/iPhone/Classes/MyLibrary/MyLibraryUnzip.h
+END
+MyLibraryBanner.mm
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/msp-nvv1/!svn/ver/21/trunk/source/iPhone/Classes/MyLibrary/MyLibraryBanner.mm
+END
+MyLibraryEdit.mm
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/msp-nvv1/!svn/ver/17/trunk/source/iPhone/Classes/MyLibrary/MyLibraryEdit.mm
+END
+MyLibraryUnzip.mm
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/msp-nvv1/!svn/ver/23/trunk/source/iPhone/Classes/MyLibrary/MyLibraryUnzip.mm
+END
+MyLibraryAdd.h
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/msp-nvv1/!svn/ver/21/trunk/source/iPhone/Classes/MyLibrary/MyLibraryAdd.h
+END
+MyLibraryAdd.mm
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/msp-nvv1/!svn/ver/22/trunk/source/iPhone/Classes/MyLibrary/MyLibraryAdd.mm
+END

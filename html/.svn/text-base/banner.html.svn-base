@@ -1,0 +1,26 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width />
+  <link rel="stylesheet" type="text/css" href="banner.css"/>
+</head>
+<body>
+<div id="contents">
+
+<div class="content">
+<form id="small_box" method="post" action="http://www.amazon.co.jp/gp/aw/rd.html" target="_blank">
+  <input type="hidden" name="__mk_ja_JP" value="カタカナ" />
+        Amazon:
+        <input type="text" name="k" /><input type="submit" name="submit" value="Go!" />
+        <input type="hidden" name="uid" value="NULLGWDOCOMO" />
+        <input type="hidden" name="at" value="akira00-22" />
+        <input type="hidden" name="m" value="aps" />
+        <input type="hidden" name="url" value="/gp/aw/s.html" />
+        <input type="hidden" name="lc" value="mqs" />
+<img src="http://www.assoc-amazon.jp/e/ir?t=akira00-22&l=mqs&o=9" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />
+</form>
+</div>
+
+</div>	
+</body>
+</html>

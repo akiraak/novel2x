@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/msp-nvv1/!svn/ver/23/trunk/source/iPhone/Classes/External/Objective-Zip
+END
+ZipWriteStream.h
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/msp-nvv1/!svn/ver/23/trunk/source/iPhone/Classes/External/Objective-Zip/ZipWriteStream.h
+END
+FileInZipInfo.m
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/msp-nvv1/!svn/ver/23/trunk/source/iPhone/Classes/External/Objective-Zip/FileInZipInfo.m
+END
+ZipReadStream.h
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/msp-nvv1/!svn/ver/23/trunk/source/iPhone/Classes/External/Objective-Zip/ZipReadStream.h
+END
+ZipWriteStream.m
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/msp-nvv1/!svn/ver/23/trunk/source/iPhone/Classes/External/Objective-Zip/ZipWriteStream.m
+END
+ZipReadStream.m
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/msp-nvv1/!svn/ver/23/trunk/source/iPhone/Classes/External/Objective-Zip/ZipReadStream.m
+END
+ZipException.h
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/msp-nvv1/!svn/ver/23/trunk/source/iPhone/Classes/External/Objective-Zip/ZipException.h
+END
+ZipFile.h
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/msp-nvv1/!svn/ver/23/trunk/source/iPhone/Classes/External/Objective-Zip/ZipFile.h
+END
+FileInZipInfo.h
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/msp-nvv1/!svn/ver/23/trunk/source/iPhone/Classes/External/Objective-Zip/FileInZipInfo.h
+END
+ZipException.m
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/msp-nvv1/!svn/ver/23/trunk/source/iPhone/Classes/External/Objective-Zip/ZipException.m
+END
+ZipFile.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/msp-nvv1/!svn/ver/23/trunk/source/iPhone/Classes/External/Objective-Zip/ZipFile.m
+END

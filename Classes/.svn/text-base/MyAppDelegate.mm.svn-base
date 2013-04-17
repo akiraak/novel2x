@@ -1,0 +1,301 @@
+//
+//  MyAppDelegate.m
+//  PMS1
+//
+//  Created by akira on 09/06/25.
+//  Copyright __MyCompanyName__ 2009. All rights reserved.
+//
+
+#import "MyAppDelegate.h"
+#import <time.h>
+#import <dirent.h>
+#import "AppData.h"
+#import "BookUtil.h"
+
+static MyAppDelegate* g_Instance = NULL;
+
+@implementation MyAppDelegate
+
+@synthesize window;
+@synthesize editBookTitle;
+
+- (void)applicationDidFinishLaunching:(UIApplication *)application {
+	ASSERT(!g_Instance);
+	g_Instance = self;
+	
+//	[UIApplication sharedApplication].idleTimerDisabled = YES;
+	[window setBackgroundColor:[UIColor colorWithRed:0.0f green:0.0f blue:0.0f alpha:1.0f]];
+	
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+	srand(tv.tv_usec);
+	
+	// アプリケーションデータ
+	{
+		ASSERT(!appData);
+		appData = new AppData;
+		ASSERT(appData);
+		appData->init();
+	}
+
+	scene = NULL;
+	myLibrary = NULL;
+	info = NULL;
+	note = NULL;
+	freeAd = NULL;
+	
+#ifdef TYPE_FREE
+	//[window addSubview:[[self getFreeAd] view]];
+	//[window makeKeyAndVisible];
+	[self start];
+	[myLibrary showPaidUpdate];
+#else
+	[self start];
+#endif
+}
+
+- (void)applicationWillResignActive:(UIApplication *)application {
+}
+
+
+- (void)applicationDidBecomeActive:(UIApplication *)application {
+}
+
+- (void)applicationDidReceiveMemoryWarning:(UIApplication *)application{
+#ifdef SHOW_MEMORY_WARNING
+	UIAlertView* alert = [[UIAlertView alloc]
+						  initWithTitle:@"メモリ不足の警告"
+						  message:@"書籍追加画面の場合：\nこの問題は書籍追加時にzipファイルのサイズが大きいと頻繁に発生します。1つの書籍であっても複数のzipファイルに分割などをし、ファイルサイズを小さくする事で回避が可能です。\n\nその他の画面の場合：\nアプリを再起動をしてください"
+						  delegate:nil
+						  cancelButtonTitle:@"OK"
+						  otherButtonTitles:nil];
+	[alert show];
+#endif
+}
+
+-(void)start{
+#ifdef TYPE_FREE
+	[[[self getFreeAd] view] removeFromSuperview];
+	CGContextRef context = UIGraphicsGetCurrentContext();
+	[UIView beginAnimations:nil context:context];
+	[UIView setAnimationTransition:UIViewAnimationTransitionFlipFromLeft forView:window cache:YES];
+	[UIView setAnimationCurve:UIViewAnimationCurveEaseInOut];
+	[UIView setAnimationDuration:0.5f];
+	[UIView commitAnimations];
+#endif
+	
+	AppData::SCENE lastScene = (AppData::SCENE)AppData::getLastScene();
+	if(lastScene == AppData::SCENE_BOOK){
+		NSString* bookName = AppData::getLastBook();
+		if(BookUtil::existBook(bookName)){
+			[self getScene]->getViewer()->setBookName(bookName);
+			[self getScene]->getViewer()->start();
+		}else{
+			[window addSubview:[[self getMyLibrary] view]];
+			[window makeKeyAndVisible];
+		}
+	}else{
+		[window addSubview:[[self getMyLibrary] view]];
+		[window makeKeyAndVisible];
+	}
+}
+
+-(void)changeSceneConfig:(NSString*)dirName{
+	[[[self getMyLibrary] view] removeFromSuperview];
+	[self getScene]->getConfig()->start(dirName);
+
+	AppData::setLastScene(AppData::SCENE_BOOK);
+	AppData::setLastBook(dirName);
+	
+	CGContextRef context = UIGraphicsGetCurrentContext();
+	[UIView beginAnimations:nil context:context];
+	[UIView setAnimationTransition:UIViewAnimationTransitionFlipFromLeft forView:window cache:YES];
+	[UIView setAnimationCurve:UIViewAnimationCurveEaseInOut];
+	[UIView setAnimationDuration:0.5f];
+	[UIView commitAnimations];
+}
+
+-(void)changeScenePaperView:(NSString*)dirName{
+	[[[self getMyLibrary] view] removeFromSuperview];
+	[self getScene]->getViewer()->setBookName(dirName);
+	[self getScene]->getViewer()->start();
+
+	AppData::setLastScene(AppData::SCENE_BOOK);
+	AppData::setLastBook(dirName);
+
+	CGContextRef context = UIGraphicsGetCurrentContext();
+	[UIView beginAnimations:nil context:context];
+	[UIView setAnimationTransition:UIViewAnimationTransitionFlipFromLeft forView:window cache:YES];
+	[UIView setAnimationCurve:UIViewAnimationCurveEaseInOut];
+	[UIView setAnimationDuration:0.5f];
+	[UIView commitAnimations];
+}
+
+-(void)changeScenePaperViewFromNote:(ms::Sint32)movePageIndex{
+	if(movePageIndex > 0){
+		[self getScene]->getViewer()->setPageIndex(movePageIndex);
+		[self getScene]->getViewer()->start();
+	}else{
+		[self getScene]->getViewer()->returnOther();
+	}
+	
+	{
+		CGRect frame = [[UIScreen mainScreen] applicationFrame];
+		[[[self getNote] view] setFrame:frame];
+	}
+	CGContextRef context = UIGraphicsGetCurrentContext();
+	[UIView beginAnimations:@"changeScenePaperViewFromNote" context:context];
+	[UIView setAnimationCurve:UIViewAnimationCurveEaseInOut];
+	[UIView setAnimationDuration:0.5f];
+	{
+		CGRect frame = [[UIScreen mainScreen] applicationFrame];
+		frame.origin.y = frame.size.height;
+		[[[self getNote] view] setFrame:frame];
+	}
+	[UIView commitAnimations];
+}
+
+-(void)changeSceneBooks{
+	[getMyLibraryTable() updateList];
+	[window addSubview:[[self getMyLibrary] view]];
+	[window makeKeyAndVisible];
+
+	AppData::setLastScene(AppData::SCENE_BOOKS_LIST);
+
+	CGContextRef context = UIGraphicsGetCurrentContext();
+	[UIView beginAnimations:nil context:context];
+	[UIView setAnimationTransition:UIViewAnimationTransitionFlipFromLeft forView:window cache:YES];
+	[UIView setAnimationCurve:UIViewAnimationCurveEaseInOut];
+	[UIView setAnimationDuration:0.5f];
+	[UIView commitAnimations];
+}
+
+-(void)changeSceneBooksEdit:(NSString*)editBookTitile{
+	self.editBookTitle = editBookTitile;
+	
+	[getMyLibraryTable() updateList];
+	[window addSubview:[[self getMyLibrary] view]];
+	[window makeKeyAndVisible];
+
+	AppData::setLastScene(AppData::SCENE_BOOKS_LIST);
+	
+	CGContextRef context = UIGraphicsGetCurrentContext();
+	[UIView beginAnimations:@"changeSceneBooksEdit" context:context];
+	[UIView setAnimationTransition:UIViewAnimationTransitionFlipFromLeft forView:window cache:YES];
+	[UIView setAnimationCurve:UIViewAnimationCurveEaseInOut];
+	[UIView setAnimationDuration:0.5f];
+	[UIView setAnimationDelegate:self];
+	[UIView setAnimationDidStopSelector:@selector(animationDidStop:finished:context:)];
+	[UIView commitAnimations];
+}
+
+-(void)changeSceneNote:(NSString*)dirName pageNo:(int)pageNo pageCount:(int)pageCount{
+	[window addSubview:[[self getNote] view]];
+	[window makeKeyAndVisible];
+	[[self getNote] cleanup:dirName pageNo:pageNo pageCount:pageCount];
+
+	{
+		CGRect frame = [[UIScreen mainScreen] applicationFrame];
+		frame.origin.y = frame.size.height;
+		[[[self getNote] view] setFrame:frame];
+	}
+	CGContextRef context = UIGraphicsGetCurrentContext();
+	[UIView beginAnimations:nil context:context];
+	[UIView setAnimationCurve:UIViewAnimationCurveEaseInOut];
+	[UIView setAnimationDuration:0.5f];
+	{
+		CGRect frame = [[UIScreen mainScreen] applicationFrame];
+		frame.origin.y = 0.0f;
+		[[[self getNote] view] setFrame:frame];
+	}
+	[UIView commitAnimations];
+}
+
+- (void)animationDidStop:(NSString *)animationID finished:(NSNumber *)finished context:(void *)context{
+	if([animationID isEqualToString:@"changeSceneBooksEdit"]){
+		[[self getMyLibrary] pushEditView:self.editBookTitle];
+		Scene::getViewer()->setDisable();
+	}		
+	if([animationID isEqualToString:@"changeScenePaperViewFromNote"]){
+		[[[self getNote] view] removeFromSuperview];
+	}
+}
+
+-(void)changeSceneInfoFromBooks{
+	[[self getMyLibrary].navigationController pushViewController:[self getInfo].addView animated:YES];
+}
+
+-(void)returnInfo{
+	[[[self getInfo] view] removeFromSuperview];
+
+	[getMyLibraryTable() updateList];
+	[window addSubview:[[self getMyLibrary] view]];
+	[window makeKeyAndVisible];
+}
+
+-(Scene*)getScene{
+	if(!scene){
+		ASSERT(!scene);
+		scene = new Scene;
+		ASSERT(scene);
+		scene->init();
+		[window addSubview:scene->getView()];
+	}
+	return scene;
+}
+
+-(MyLibrary*)getMyLibrary{
+	if(!myLibrary){
+		myLibrary = [[[MyLibrary alloc] init] retain];
+	}
+	return myLibrary;
+}
+
+-(Info*)getInfo{
+	if(!info){
+		info = [[[Info alloc] init] retain];
+	}
+	return info;
+}
+
+-(Note*)getNote{
+	if(!note){
+		note = [[[Note alloc] init] retain];
+	}
+	return note;
+}
+-(FreeAd*)getFreeAd{
+	if(!freeAd){
+		freeAd = [[[FreeAd alloc] init] retain];
+	}
+	return freeAd;
+}
+	
+- (void)dealloc {
+	[UIApplication sharedApplication].idleTimerDisabled = NO;
+	[window release];
+	MS_SAFE_DELETE(appData);
+	MS_SAFE_DELETE(scene);
+	if(myLibrary){
+		[myLibrary release];
+	}
+	if(info){
+		[info release];
+	}
+	if(note){
+		[note release];
+	}
+	if(freeAd){
+		[freeAd release];
+	}
+	[editBookTitle release];
+	[super dealloc];
+	ASSERT(g_Instance);
+	g_Instance = NULL;
+}
+
+@end
+
+MyAppDelegate* getMyAppDelegateInstance(){
+	return g_Instance;
+}

@@ -1,0 +1,223 @@
+#import "MS.h"
+#import "SceneDebugString.h"
+#import "Scene.h"
+
+#define USE_DEPTH_BUFFER	(1)
+
+namespace ms {
+	//--------------------------------
+	int GLScene::SCREEN_SIZE_W = 320;
+	int GLScene::SCREEN_SIZE_H = 480;
+	
+	//--------------------------------
+	GLScene::GLScene():
+	view(NULL),
+	backingWidth(0),
+	backingHeight(0),
+	context(NULL),
+	viewRenderbuffer(0),
+	viewFramebuffer(0),	
+	depthRenderbuffer(0),
+	animationTimer(NULL),
+	prevUpdateTime(0),
+	screenType((SCREEN_TYPE)0),
+	contentScale(1.0f),
+	isDrawFlag(FALSE),
+	suportRetina(FALSE)
+	{
+	}
+	//--------------------------------
+	GLScene::~GLScene(){
+		[animationTimer release];
+		if([EAGLContext currentContext] == context){
+			[EAGLContext setCurrentContext:nil];
+		}		 
+		[context release];
+		[view release];
+	}
+	//--------------------------------
+	void GLScene::init(CGRect _frame){
+        if(suportRetina && [UIScreen instancesRespondToSelector:@selector(scale)] && [[UIScreen mainScreen] scale] == 2.0){
+			setContentScale(2.0f);
+		}
+		ASSERT(!view);
+		view = [[MSGLScene alloc] initWithFrame:_frame parent:this];
+		ASSERT(view);
+		if([view respondsToSelector:@selector(contentScaleFactor)]){
+			view.contentScaleFactor = contentScale;
+		}
+		
+        CAEAGLLayer* eaglLayer = (CAEAGLLayer*)view.layer;        
+        eaglLayer.opaque = YES;
+        eaglLayer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys:
+                                        [NSNumber numberWithBool:NO], kEAGLDrawablePropertyRetainedBacking, kEAGLColorFormatRGBA8, kEAGLDrawablePropertyColorFormat, nil];
+        context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
+        if(!context || ![EAGLContext setCurrentContext:context]){
+            [view release];
+			view = NULL;
+			ASSERT(FALSE);
+        }
+		{
+			int maxTex;
+			glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTex);
+			GLTexture::setTextureMaxSize(maxTex);
+			NSLOG(@"max texture size: %d", maxTex);
+		}
+		this->start();
+		prevUpdateTime = ms::getTime();
+	}
+	//--------------------------------
+	void GLScene::start(){
+		animationTimer = [NSTimer scheduledTimerWithTimeInterval:1.0/60.0 target:view selector:@selector(update) userInfo:nil repeats:YES];
+		ASSERT(animationTimer);
+	}
+	//--------------------------------
+	void GLScene::stop(){
+		[animationTimer invalidate];
+	}
+	//--------------------------------
+	BOOL GLScene::update(Uint32 elapsedTime){
+		return FALSE;
+	}
+	//--------------------------------
+	void GLScene::draw(){
+	}
+	void GLScene::touchesBegan(const Vector2f* touchPos, Uint32 touchCount, NSSet* touches, UIEvent* event){
+	}
+	//--------------------------------
+	void GLScene::touchesMoved(const Vector2f* touchPos, Uint32 touchCount, NSSet* touches, UIEvent* event){
+	}
+	//--------------------------------
+	void GLScene::touchesEnded(const Vector2f* touchPos, Uint32 touchCount, NSSet* touches, UIEvent* event){
+	}
+	//--------------------------------
+	void GLScene::touchesCancelled(const Vector2f* touchPos, Uint32 touchCount, NSSet* touches, UIEvent* event){
+	}
+	//--------------------------------
+	void GLScene::onChangeSceneType(SCREEN_TYPE type){
+		screenType = type;
+	}
+	//--------------------------------
+	void GLScene::onLayoutSubviews(){
+		[EAGLContext setCurrentContext:context];
+		destroyFramebuffer();
+		createFramebuffer();
+		onUpdate();
+	}
+	//--------------------------------
+	void GLScene::onUpdate(){
+		Uint32 nowTime = ms::getTime();
+		Uint32 elapsedTime = nowTime - prevUpdateTime;
+		prevUpdateTime = nowTime;
+		BOOL isDraw = update(elapsedTime);
+		if(isDraw || isDrawFlag){
+			draw();
+			isDrawFlag = FALSE;
+		}
+	}
+	//--------------------------------
+	void GLScene::createFramebuffer(){
+		glGenFramebuffersOES(1, &viewFramebuffer);
+		glGenRenderbuffersOES(1, &viewRenderbuffer);
+		
+		glBindFramebufferOES(GL_FRAMEBUFFER_OES, viewFramebuffer);
+		glBindRenderbufferOES(GL_RENDERBUFFER_OES, viewRenderbuffer);
+		ASSERT(view);
+		[context renderbufferStorage:GL_RENDERBUFFER_OES fromDrawable:(CAEAGLLayer*)view.layer];
+		glFramebufferRenderbufferOES(GL_FRAMEBUFFER_OES, GL_COLOR_ATTACHMENT0_OES, GL_RENDERBUFFER_OES, viewRenderbuffer);
+		glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES, GL_RENDERBUFFER_WIDTH_OES, &backingWidth);
+		glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES, GL_RENDERBUFFER_HEIGHT_OES, &backingHeight);
+		
+		if (USE_DEPTH_BUFFER) {
+			glGenRenderbuffersOES(1, &depthRenderbuffer);
+			glBindRenderbufferOES(GL_RENDERBUFFER_OES, depthRenderbuffer);
+			glRenderbufferStorageOES(GL_RENDERBUFFER_OES, GL_DEPTH_COMPONENT16_OES, backingWidth, backingHeight);
+			glFramebufferRenderbufferOES(GL_FRAMEBUFFER_OES, GL_DEPTH_ATTACHMENT_OES, GL_RENDERBUFFER_OES, depthRenderbuffer);
+		}
+		
+		if(glCheckFramebufferStatusOES(GL_FRAMEBUFFER_OES) != GL_FRAMEBUFFER_COMPLETE_OES) {
+			NSLog(@"failed to make complete framebuffer object %x", glCheckFramebufferStatusOES(GL_FRAMEBUFFER_OES));
+			ASSERT(FALSE);
+		}
+	}
+	//--------------------------------
+	void GLScene::destroyFramebuffer(){
+		glDeleteFramebuffersOES(1, &viewFramebuffer);
+		viewFramebuffer = 0;
+		glDeleteRenderbuffersOES(1, &viewRenderbuffer);
+		viewRenderbuffer = 0;
+		if(depthRenderbuffer) {
+			glDeleteRenderbuffersOES(1, &depthRenderbuffer);
+			depthRenderbuffer = 0;
+		}
+	}
+	//--------------------------------
+	ms::Vector2n GLScene::getScreenSize(){
+		ms::Vector2n size;
+		if(screenType == SCREEN_TYPE_VERTICALITY){
+			size.x = SCREEN_SIZE_W;
+			size.y = SCREEN_SIZE_H;
+		}else{
+			ASSERT(screenType == SCREEN_TYPE_HORIZONTALLY);
+			size.x = SCREEN_SIZE_H;
+			size.y = SCREEN_SIZE_W;
+		}
+		return size;
+	}
+	//--------------------------------
+	void GLScene::setScreenType(SCREEN_TYPE type){
+		screenType = type;
+		onChangeSceneType(type);
+	}
+	//--------------------------------
+	void GLScene::setScreenSize(const ms::Vector2n& size){
+		SCREEN_SIZE_W = size.x;
+		SCREEN_SIZE_H = size.y;
+	}
+};
+
+@implementation MSGLScene
+
++(Class)layerClass{
+	return [CAEAGLLayer class];
+}
+
+-(id)initWithFrame:(CGRect)frame parent:(ms::GLScene*)_scene{
+    if ((self = [super initWithFrame:frame])) {
+		self.multipleTouchEnabled = YES;
+		self.backgroundColor = [UIColor blackColor];
+		scene = _scene;
+	}
+	return self;
+}
+
+- (void)update {
+	ASSERT(scene);
+	scene->onUpdate();
+}
+
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event{
+    NSLog(@"0");
+	scene->touchesBegan(NULL, 0, touches, event);
+}
+- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event{
+    NSLog(@"6");
+	scene->touchesMoved(NULL, 0, touches, event);
+}
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event{
+	scene->touchesEnded(NULL, 0, touches, event);
+}
+- (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event{
+	scene->touchesCancelled(NULL, 0, touches, event);
+}
+- (void)layoutSubviews {
+	ASSERT(scene);
+	scene->onLayoutSubviews();
+}
+
+- (void)dealloc {
+    [super dealloc];
+}
+
+@end
+

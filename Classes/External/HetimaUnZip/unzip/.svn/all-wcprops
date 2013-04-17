@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/msp-nvv1/!svn/ver/18/trunk/source/iPhone/Classes/External/HetimaUnZip/unzip
+END
+LICENSE
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/msp-nvv1/!svn/ver/3/trunk/source/iPhone/Classes/External/HetimaUnZip/unzip/LICENSE
+END
+ioapi.c
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/msp-nvv1/!svn/ver/3/trunk/source/iPhone/Classes/External/HetimaUnZip/unzip/ioapi.c
+END
+ChangeLogUnzip101e
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/msp-nvv1/!svn/ver/3/trunk/source/iPhone/Classes/External/HetimaUnZip/unzip/ChangeLogUnzip101e
+END
+unzip.c
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/msp-nvv1/!svn/ver/18/trunk/source/iPhone/Classes/External/HetimaUnZip/unzip/unzip.c
+END
+ChangeLog
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/msp-nvv1/!svn/ver/3/trunk/source/iPhone/Classes/External/HetimaUnZip/unzip/ChangeLog
+END
+crypt.h
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/msp-nvv1/!svn/ver/3/trunk/source/iPhone/Classes/External/HetimaUnZip/unzip/crypt.h
+END
+ioapi.h
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/msp-nvv1/!svn/ver/3/trunk/source/iPhone/Classes/External/HetimaUnZip/unzip/ioapi.h
+END
+unzip.h
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/msp-nvv1/!svn/ver/3/trunk/source/iPhone/Classes/External/HetimaUnZip/unzip/unzip.h
+END
+README_FOR_UNZIP_DIRECTORY
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/msp-nvv1/!svn/ver/3/trunk/source/iPhone/Classes/External/HetimaUnZip/unzip/README_FOR_UNZIP_DIRECTORY
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/msp-nvv1/!svn/ver/3/trunk/source/iPhone/Classes/External/HetimaUnZip/unzip/README
+END

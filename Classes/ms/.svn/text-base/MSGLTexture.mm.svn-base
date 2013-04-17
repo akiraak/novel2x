@@ -1,0 +1,339 @@
+#import "MS.h"
+#include <unistd.h>
+
+namespace ms {
+	//--------------------------------
+	ms::Uint32 GLTexture::textureMaxSize = 1024;
+	
+	//--------------------------------
+	GLTexture::GLTexture():
+	state((STATE)0),
+	textureName(0),
+	textureSize(Vector2fMake(0.0f, 0.0f)),
+	imageSize(Vector2fMake(0.0f, 0.0f)),
+	filePath(NULL),
+	asyncReadBuffer(NULL),
+	asyncReadSize(0),
+	asyncReadedSize(0),
+	dataRelease(TRUE),
+	data(NULL)
+	{
+	}
+	//--------------------------------
+	GLTexture::~GLTexture(){
+		if(isLoaded()){
+			glDeleteTextures(1, &textureName);
+		}
+		MS_SAFE_FREE(asyncReadBuffer);
+		[filePath release];
+		MS_SAFE_FREE(data);
+	}		
+	//--------------------------------
+	void GLTexture::initWithFilePath(const char* fileName){
+		ASSERT(fileName);
+		NSString* name = [NSString stringWithUTF8String:fileName];
+		UIImage* uiImage = [UIImage imageNamed:name];
+		initWithUIImage(uiImage);
+	}
+	//--------------------------------
+	void GLTexture::initWithFilePath2(const char* filePath){
+		ASSERT(filePath);
+		NSString* path = [NSString stringWithUTF8String:filePath];
+		UIImage* uiImage = [UIImage imageWithContentsOfFile:path];
+		initWithUIImage(uiImage);
+	}
+	//--------------------------------
+	void GLTexture::initWithFilePathAsync(const char* path){
+		filePath = [[NSString stringWithUTF8String:path] retain];
+		int fd = open(path, O_RDONLY);
+		NSLOG(@"%s", path);
+		ASSERT(fd != -1);
+		int fileSize = lseek(fd, 0, SEEK_END);
+		NSLog(@"%s", path);
+		ASSERT(fileSize > 0);
+		lseek(fd, 0, SEEK_SET);
+		close(fd);
+		ASSERT(!asyncReadBuffer);
+		asyncReadBuffer = malloc(fileSize);
+		ASSERT(asyncReadBuffer);
+		asyncReadSize = fileSize;
+		asyncReadedSize = 0;
+		state = STATE_LOAD_REQUEST_WAIT;
+	}
+	//--------------------------------
+	void GLTexture::initWithFilePathAsync(const char* fileName, const char* fileExtension){
+		ASSERT(!filePath);
+		NSString* fileExtStr = NULL;
+		if(fileExtension){
+			fileExtStr = [NSString stringWithUTF8String:fileExtension];
+		}
+		NSString* pathWork = [[NSBundle mainBundle] pathForResource:[NSString stringWithUTF8String:fileName] ofType:fileExtStr];
+		ASSERT(pathWork);
+		const char* path = [pathWork cStringUsingEncoding:1];
+		initWithFilePathAsync(path);
+	}
+	//--------------------------------
+	void GLTexture::initWithString(
+		NSString* string,
+		ms::Vector2f dimensions,
+		UITextAlignment alignment,
+		NSString* fontName,
+		CGFloat fontSize
+	){
+		NSUInteger				width;
+		NSUInteger				height;
+		NSUInteger				i;
+		CGContextRef			context;
+		CGColorSpaceRef			colorSpace;
+		UIFont *				font;
+		
+		font = [UIFont fontWithName:fontName size:fontSize];
+		
+		CGSize stringDrawSize;
+		if(dimensions.x == 0.0f || dimensions.y == 0.0f){
+			stringDrawSize = [string sizeWithFont:font];
+			dimensions.x = stringDrawSize.width;
+			dimensions.y = stringDrawSize.height;
+}
+
+		width = dimensions.x;
+		if((width != 1) && (width & (width - 1))) {
+			i = 1;
+			while(i < width)
+				i *= 2;
+			width = i;
+		}
+		height = dimensions.y;
+		if((height != 1) && (height & (height - 1))) {
+			i = 1;
+			while(i < height)
+				i *= 2;
+			height = i;
+		}
+		
+		colorSpace = CGColorSpaceCreateDeviceGray();
+		ASSERT(!data);
+		data = calloc(height, width);
+		ASSERT(data);
+		context = CGBitmapContextCreate(data, width, height, 8, width, colorSpace, kCGImageAlphaNone);
+		CGColorSpaceRelease(colorSpace);
+		
+		CGContextSetGrayFillColor(context, 1.0, 1.0);
+		CGContextTranslateCTM(context, 0.0, height);
+		CGContextScaleCTM(context, 1.0, -1.0); //NOTE: NSString draws in UIKit referential i.e. renders upside-down compared to CGBitmapContext referential
+		UIGraphicsPushContext(context);
+		[string drawInRect:CGRectMake(0, 0, dimensions.x, dimensions.y) withFont:font lineBreakMode:UILineBreakModeWordWrap alignment:alignment];
+		UIGraphicsPopContext();
+		
+		initWithData(data, kPixelFormat_A8, ms::Vector2fMake(width, height),  dimensions);
+		
+		CGContextRelease(context);
+		if(dataRelease){
+			MS_SAFE_FREE(data);
+		}
+	}
+	//--------------------------------
+	void GLTexture::initWithData(
+		const void* data,
+		PixelFormat pixelFormat,
+		Vector2f _textureSize,
+		Vector2f _imageSize
+	){
+		GLint saveName;
+		glGenTextures(1, &textureName);
+		glGetIntegerv(GL_TEXTURE_BINDING_2D, &saveName);
+		glBindTexture(GL_TEXTURE_2D, textureName);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		switch(pixelFormat) {
+				
+			case kPixelFormat_RGBA8888:
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _textureSize.x, _textureSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+				break;
+			case kPixelFormat_A8:
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, _textureSize.x, _textureSize.y, 0, GL_ALPHA, GL_UNSIGNED_BYTE, data);
+				break;
+			default:
+				[NSException raise:NSInternalInconsistencyException format:@""];
+				
+		}
+		glBindTexture(GL_TEXTURE_2D, saveName);
+		
+		textureSize = _textureSize;
+		imageSize = _imageSize;
+		state = STATE_CREATED;
+	}
+	//--------------------------------
+	void GLTexture::initWithData(NSData* data){
+		UIImage* uiImage = [UIImage imageWithData:data];
+		initWithUIImage(uiImage);
+	}
+	//--------------------------------
+	void GLTexture::initWithUIImage(UIImage* uiImage){
+		CGImageRef cgImage = uiImage.CGImage;
+		NSUInteger				width;
+		NSUInteger				height;
+		CGContextRef			context_work = nil;
+		CGColorSpaceRef			colorSpace;
+		BOOL					hasAlpha;
+		CGImageAlphaInfo		info;
+		PixelFormat				pixelFormat;
+		BOOL					sizeToFit = NO;
+		
+		info = CGImageGetAlphaInfo(cgImage);
+		hasAlpha = ((info == kCGImageAlphaPremultipliedLast) || (info == kCGImageAlphaPremultipliedFirst) || (info == kCGImageAlphaLast) || (info == kCGImageAlphaFirst) ? YES : NO);
+		if(CGImageGetColorSpace(cgImage)) {
+			pixelFormat = kPixelFormat_RGBA8888;
+		}else{
+			//NOTE: No colorspace means a mask image
+			pixelFormat = kPixelFormat_A8;
+		}
+		Vector2f _imageSize = Vector2fMake(CGImageGetWidth(cgImage), CGImageGetHeight(cgImage));
+		width = _imageSize.x;
+		if((width != 1) && (width & (width - 1))) {
+			NSUInteger i = 1;
+			while((sizeToFit ? 2 * i : i) < width)
+				i *= 2;
+			width = i;
+		}
+		height = _imageSize.y;
+		if((height != 1) && (height & (height - 1))) {
+			NSUInteger i = 1;
+			while((sizeToFit ? 2 * i : i) < height)
+				i *= 2;
+			height = i;
+		}
+		ASSERT(width <= textureMaxSize);
+		ASSERT(height <= textureMaxSize);
+		switch(pixelFormat){
+			case kPixelFormat_RGBA8888:
+				colorSpace = CGColorSpaceCreateDeviceRGB();
+				ASSERT(!data);
+				data = malloc(height * width * 4);
+				ASSERT(data);
+				context_work = CGBitmapContextCreate(data, width, height, 8, 4 * width, colorSpace, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+				CGColorSpaceRelease(colorSpace);
+				break;
+			case kPixelFormat_A8:
+				ASSERT(!data);
+				data = malloc(height * width);
+				ASSERT(data);
+				context_work = CGBitmapContextCreate(data, width, height, 8, width, NULL, kCGImageAlphaOnly);
+				break;				
+			default:
+				[NSException raise:NSInternalInconsistencyException format:@"Invalid pixel format"];
+				ASSERT(FALSE);
+		}
+		CGContextClearRect(context_work, CGRectMake(0, 0, width, height));
+		CGContextTranslateCTM(context_work, 0, height - _imageSize.y);
+		CGContextDrawImage(context_work, CGRectMake(0, 0, CGImageGetWidth(cgImage), CGImageGetHeight(cgImage)), cgImage);
+		initWithData(data, pixelFormat, Vector2fMake(width, height), _imageSize);
+		CGContextRelease(context_work);
+		if(dataRelease){
+			MS_SAFE_FREE(data);
+		}
+	}
+	//--------------------------------
+	BOOL GLTexture::startAsyncLoad(){
+		ASSERT(!isLoaded());
+		ASSERT(filePath);
+		NSURL* url = [NSURL fileURLWithPath:filePath];
+		CFReadStreamRef readStream = CFReadStreamCreateWithFile(kCFAllocatorDefault, (CFURLRef)url);
+		CFStreamClientContext context = {0, this, NULL, NULL, NULL};
+		CFOptionFlags registeredEvents = kCFStreamEventHasBytesAvailable|kCFStreamEventErrorOccurred|kCFStreamEventEndEncountered;
+		if(CFReadStreamSetClient(readStream, registeredEvents, asyncLoadCallBack, &context)){
+			CFReadStreamScheduleWithRunLoop(readStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
+		}
+		if(!CFReadStreamOpen(readStream)){
+			CFStreamError erorr = CFReadStreamGetError(readStream);
+			if(erorr.error != 0){
+				// An error has occurred.
+				if(erorr.domain == kCFStreamErrorDomainPOSIX){
+					// Interpret myErr.error as a UNIX errno.
+					strerror(erorr.error);
+				}else if(erorr.domain == kCFStreamErrorDomainMacOSStatus){
+//					OSStatus macError = (OSStatus)myErr.error;
+				}
+				// Check other domains.
+			}else{
+				// start the run loop
+				CFRunLoopRun();
+			}
+		}			
+		return TRUE;
+	}
+	//--------------------------------
+	void GLTexture::createAsyncTexture(BOOL releaseData){
+		ASSERT(state == STATE_LOADED);
+		NSData* data = [NSData dataWithBytesNoCopy:asyncReadBuffer length:asyncReadSize freeWhenDone:NO];
+		initWithData(data);
+		if(releaseData){
+			MS_SAFE_FREE(asyncReadBuffer);
+		}
+	}
+	//--------------------------------
+	void GLTexture::asyncLoadCallBack(CFReadStreamRef stream, CFStreamEventType event, void *info){
+		ASSERT(info);
+		GLTexture* texture = (GLTexture*)info;
+		switch(event) {
+			case kCFStreamEventHasBytesAvailable:
+			{
+				if(texture->asyncReadSize > texture->asyncReadedSize){
+					// It is safe to call CFReadStreamRead; it won’t block because bytes
+					// are available.
+					CFIndex bytesRead = CFReadStreamRead(stream, ((UInt8*)texture->asyncReadBuffer)+texture->asyncReadedSize, texture->asyncReadSize-texture->asyncReadedSize);
+					texture->asyncReadedSize += bytesRead;
+					ASSERT(texture->asyncReadSize >= texture->asyncReadedSize);
+					if(texture->asyncReadSize == texture->asyncReadedSize){
+						CFReadStreamClose(stream);
+						CFRelease(stream);
+						texture->state = STATE_LOADED;
+					}
+					// It is safe to ignore a value of bytesRead that is less than or
+					// equal to zero because these cases will generate other events.
+				}
+				break;
+			}
+			case kCFStreamEventErrorOccurred:
+			{
+				CFStreamError error = CFReadStreamGetError(stream);
+				NSLog(@"%d, %d", (int)error.domain, (int)error.error);
+				CFReadStreamUnscheduleFromRunLoop(stream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
+				CFReadStreamClose(stream);
+				CFRelease(stream);
+				break;
+			}
+			case kCFStreamEventEndEncountered:
+				CFReadStreamUnscheduleFromRunLoop(stream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
+				CFReadStreamClose(stream);
+				CFRelease(stream);
+				break;
+		}
+	}
+	//--------------------------------
+	void GLTexture::update(){
+		switch (state) {
+			case STATE_NONE:
+				break;
+			case STATE_LOAD_REQUEST_WAIT:
+				break;
+			case STATE_LOADED:
+				break;
+			case STATE_CREATED:
+				break;
+		}
+	}
+	//--------------------------------
+	BOOL GLTexture::isLoaded(){
+		return (state == STATE_LOADED || state == STATE_CREATED);
+	}
+	//--------------------------------
+	BOOL GLTexture::isCreated(){
+		return (state == STATE_CREATED);
+	}
+	//--------------------------------
+	NSData* GLTexture::getFileData(){
+		ASSERT(state == STATE_LOADED);
+		NSData* fileData = [NSData dataWithBytesNoCopy:asyncReadBuffer length:asyncReadSize freeWhenDone:NO];
+		return fileData;
+	}
+};

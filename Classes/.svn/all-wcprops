@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/msp-nvv1/!svn/ver/26/trunk/source/iPhone/Classes
+END
+AppData.h
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/msp-nvv1/!svn/ver/18/trunk/source/iPhone/Classes/AppData.h
+END
+BookUtil.mm
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/msp-nvv1/!svn/ver/26/trunk/source/iPhone/Classes/BookUtil.mm
+END
+AppData.mm
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/msp-nvv1/!svn/ver/18/trunk/source/iPhone/Classes/AppData.mm
+END
+Texture.h
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/msp-nvv1/!svn/ver/18/trunk/source/iPhone/Classes/Texture.h
+END
+MyAppDelegate.h
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/msp-nvv1/!svn/ver/22/trunk/source/iPhone/Classes/MyAppDelegate.h
+END
+AppType.h
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/msp-nvv1/!svn/ver/1/trunk/source/iPhone/Classes/AppType.h
+END
+Texture.mm
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/msp-nvv1/!svn/ver/18/trunk/source/iPhone/Classes/Texture.mm
+END
+MyAppDelegate.mm
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/msp-nvv1/!svn/ver/22/trunk/source/iPhone/Classes/MyAppDelegate.mm
+END
+BookUtil.h
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/msp-nvv1/!svn/ver/17/trunk/source/iPhone/Classes/BookUtil.h
+END

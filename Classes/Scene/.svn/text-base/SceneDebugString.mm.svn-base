@@ -1,0 +1,215 @@
+#import "SceneDebugString.h"
+#import "Scene.h"
+
+//--------------------------------
+SceneDebugString* SceneDebugString::instance = NULL;
+
+//--------------------------------
+SceneDebugString::SceneDebugString():
+texture(NULL),
+sprite(NULL),
+fpsSprite(NULL),
+fpsBarSprite(NULL)
+{
+	ASSERT(!instance);
+	instance = this;
+}
+//--------------------------------
+SceneDebugString::~SceneDebugString(){
+	MS_SAFE_DELETE(texture);
+	MS_SAFE_DELETE(sprite);
+	MS_SAFE_DELETE(fpsSprite);
+	MS_SAFE_DELETE(fpsBarSprite);
+
+	ASSERT(instance);
+	instance = NULL;
+}
+//--------------------------------
+void SceneDebugString::init(){
+	{
+		ms::GLTexture* object = new ms::GLTexture;
+		ASSERT(object);
+		object->initWithFilePath("debug_font.png");
+		ASSERT(!texture);
+		texture = object;
+	}
+	{
+		ms::Vector2f textureSize = texture->getTextureSize();
+		ms::GLKeyedSprite::KEY_INFO keyInfo[]={
+			{ ' ', ms::UVMake((textureSize.x-16.0f)/textureSize.x, 0.0f/textureSize.y, 1.0f, 16.0f/textureSize.y), },
+
+			{ '0', ms::UVMake(16.0f * 0.0f / textureSize.x, 16.0f * 0.0f / textureSize.y, 16.0f *  1.0f / textureSize.x, 16.0f * 1.0f / textureSize.y), },
+			{ '1', ms::UVMake(16.0f * 1.0f / textureSize.x, 16.0f * 0.0f / textureSize.y, 16.0f *  2.0f / textureSize.x, 16.0f * 1.0f / textureSize.y), },
+			{ '2', ms::UVMake(16.0f * 2.0f / textureSize.x, 16.0f * 0.0f / textureSize.y, 16.0f *  3.0f / textureSize.x, 16.0f * 1.0f / textureSize.y), },
+			{ '3', ms::UVMake(16.0f * 3.0f / textureSize.x, 16.0f * 0.0f / textureSize.y, 16.0f *  4.0f / textureSize.x, 16.0f * 1.0f / textureSize.y), },
+			{ '4', ms::UVMake(16.0f * 4.0f / textureSize.x, 16.0f * 0.0f / textureSize.y, 16.0f *  5.0f / textureSize.x, 16.0f * 1.0f / textureSize.y), },
+			{ '5', ms::UVMake(16.0f * 5.0f / textureSize.x, 16.0f * 0.0f / textureSize.y, 16.0f *  6.0f / textureSize.x, 16.0f * 1.0f / textureSize.y), },
+			{ '6', ms::UVMake(16.0f * 6.0f / textureSize.x, 16.0f * 0.0f / textureSize.y, 16.0f *  7.0f / textureSize.x, 16.0f * 1.0f / textureSize.y), },
+			{ '7', ms::UVMake(16.0f * 7.0f / textureSize.x, 16.0f * 0.0f / textureSize.y, 16.0f *  8.0f / textureSize.x, 16.0f * 1.0f / textureSize.y), },
+			{ '8', ms::UVMake(16.0f * 8.0f / textureSize.x, 16.0f * 0.0f / textureSize.y, 16.0f *  9.0f / textureSize.x, 16.0f * 1.0f / textureSize.y), },
+			{ '9', ms::UVMake(16.0f * 9.0f / textureSize.x, 16.0f * 0.0f / textureSize.y, 16.0f * 10.0f / textureSize.x, 16.0f * 1.0f / textureSize.y), },
+			{ '-', ms::UVMake(16.0f * 10.0f / textureSize.x, 16.0f * 0.0f / textureSize.y, 16.0f * 11.0f / textureSize.x, 16.0f * 1.0f / textureSize.y), },
+			{ '!', ms::UVMake(16.0f *  0.0f / textureSize.x, 16.0f * 1.0f / textureSize.y, 16.0f *  1.0f / textureSize.x, 16.0f * 2.0f / textureSize.y), },
+			{ '"', ms::UVMake(16.0f *  1.0f / textureSize.x, 16.0f * 1.0f / textureSize.y, 16.0f *  2.0f / textureSize.x, 16.0f * 2.0f / textureSize.y), },
+			{ '#', ms::UVMake(16.0f *  2.0f / textureSize.x, 16.0f * 1.0f / textureSize.y, 16.0f *  3.0f / textureSize.x, 16.0f * 2.0f / textureSize.y), },
+			{ '$', ms::UVMake(16.0f *  3.0f / textureSize.x, 16.0f * 1.0f / textureSize.y, 16.0f *  4.0f / textureSize.x, 16.0f * 2.0f / textureSize.y), },
+			{ '%', ms::UVMake(16.0f *  4.0f / textureSize.x, 16.0f * 1.0f / textureSize.y, 16.0f *  5.0f / textureSize.x, 16.0f * 2.0f / textureSize.y), },
+			{ '&', ms::UVMake(16.0f *  5.0f / textureSize.x, 16.0f * 1.0f / textureSize.y, 16.0f *  6.0f / textureSize.x, 16.0f * 2.0f / textureSize.y), },
+			{ '\'', ms::UVMake(16.0f * 6.0f / textureSize.x, 16.0f * 1.0f / textureSize.y, 16.0f *  7.0f / textureSize.x, 16.0f * 2.0f / textureSize.y), },
+			{ '(', ms::UVMake(16.0f *  7.0f / textureSize.x, 16.0f * 1.0f / textureSize.y, 16.0f *  8.0f / textureSize.x, 16.0f * 2.0f / textureSize.y), },
+			{ ')', ms::UVMake(16.0f *  8.0f / textureSize.x, 16.0f * 1.0f / textureSize.y, 16.0f *  9.0f / textureSize.x, 16.0f * 2.0f / textureSize.y), },
+			{ '=', ms::UVMake(16.0f *  9.0f / textureSize.x, 16.0f * 1.0f / textureSize.y, 16.0f * 10.0f / textureSize.x, 16.0f * 2.0f / textureSize.y), },
+			{ '~', ms::UVMake(16.0f * 10.0f / textureSize.x, 16.0f * 1.0f / textureSize.y, 16.0f * 11.0f / textureSize.x, 16.0f * 2.0f / textureSize.y), },
+			{ '|', ms::UVMake(16.0f * 11.0f / textureSize.x, 16.0f * 1.0f / textureSize.y, 16.0f * 12.0f / textureSize.x, 16.0f * 2.0f / textureSize.y), },
+			{ '@', ms::UVMake(16.0f * 12.0f / textureSize.x, 16.0f * 1.0f / textureSize.y, 16.0f * 13.0f / textureSize.x, 16.0f * 2.0f / textureSize.y), },
+			{ '[', ms::UVMake(16.0f * 13.0f / textureSize.x, 16.0f * 1.0f / textureSize.y, 16.0f * 14.0f / textureSize.x, 16.0f * 2.0f / textureSize.y), },
+			{ ']', ms::UVMake(16.0f * 14.0f / textureSize.x, 16.0f * 1.0f / textureSize.y, 16.0f * 15.0f / textureSize.x, 16.0f * 2.0f / textureSize.y), },
+			{ ';', ms::UVMake(16.0f * 15.0f / textureSize.x, 16.0f * 1.0f / textureSize.y, 16.0f * 16.0f / textureSize.x, 16.0f * 2.0f / textureSize.y), },
+			{ ':', ms::UVMake(16.0f *  0.0f / textureSize.x, 16.0f * 2.0f / textureSize.y, 16.0f *  1.0f / textureSize.x, 16.0f * 3.0f / textureSize.y), },
+			{ ',', ms::UVMake(16.0f *  1.0f / textureSize.x, 16.0f * 2.0f / textureSize.y, 16.0f *  2.0f / textureSize.x, 16.0f * 3.0f / textureSize.y), },
+			{ '.', ms::UVMake(16.0f *  2.0f / textureSize.x, 16.0f * 2.0f / textureSize.y, 16.0f *  3.0f / textureSize.x, 16.0f * 3.0f / textureSize.y), },
+			{ '/', ms::UVMake(16.0f *  3.0f / textureSize.x, 16.0f * 2.0f / textureSize.y, 16.0f *  4.0f / textureSize.x, 16.0f * 3.0f / textureSize.y), },
+			{ '¥¥', ms::UVMake(16.0f *  4.0f / textureSize.x, 16.0f * 2.0f / textureSize.y, 16.0f *  5.0f / textureSize.x, 16.0f * 3.0f / textureSize.y), },
+			{ '`', ms::UVMake(16.0f *  5.0f / textureSize.x, 16.0f * 2.0f / textureSize.y, 16.0f *  6.0f / textureSize.x, 16.0f * 3.0f / textureSize.y), },
+			{ '{', ms::UVMake(16.0f *  6.0f / textureSize.x, 16.0f * 2.0f / textureSize.y, 16.0f *  7.0f / textureSize.x, 16.0f * 3.0f / textureSize.y), },
+			{ '}', ms::UVMake(16.0f *  7.0f / textureSize.x, 16.0f * 2.0f / textureSize.y, 16.0f *  8.0f / textureSize.x, 16.0f * 3.0f / textureSize.y), },
+			{ '+', ms::UVMake(16.0f *  8.0f / textureSize.x, 16.0f * 2.0f / textureSize.y, 16.0f *  9.0f / textureSize.x, 16.0f * 3.0f / textureSize.y), },
+			{ '*', ms::UVMake(16.0f *  9.0f / textureSize.x, 16.0f * 2.0f / textureSize.y, 16.0f * 10.0f / textureSize.x, 16.0f * 3.0f / textureSize.y), },
+			{ '<', ms::UVMake(16.0f * 10.0f / textureSize.x, 16.0f * 2.0f / textureSize.y, 16.0f * 11.0f / textureSize.x, 16.0f * 3.0f / textureSize.y), },
+			{ '>', ms::UVMake(16.0f * 11.0f / textureSize.x, 16.0f * 2.0f / textureSize.y, 16.0f * 12.0f / textureSize.x, 16.0f * 3.0f / textureSize.y), },
+			{ '?', ms::UVMake(16.0f * 12.0f / textureSize.x, 16.0f * 2.0f / textureSize.y, 16.0f * 13.0f / textureSize.x, 16.0f * 3.0f / textureSize.y), },
+			{ '_', ms::UVMake(16.0f * 13.0f / textureSize.x, 16.0f * 2.0f / textureSize.y, 16.0f * 14.0f / textureSize.x, 16.0f * 3.0f / textureSize.y), },						
+			{ 'a', ms::UVMake(16.0f *  0.0f / textureSize.x, 16.0f * 3.0f / textureSize.y, 16.0f *  1.0f / textureSize.x, 16.0f * 4.0f / textureSize.y), },
+			{ 'b', ms::UVMake(16.0f *  1.0f / textureSize.x, 16.0f * 3.0f / textureSize.y, 16.0f *  2.0f / textureSize.x, 16.0f * 4.0f / textureSize.y), },
+			{ 'c', ms::UVMake(16.0f *  2.0f / textureSize.x, 16.0f * 3.0f / textureSize.y, 16.0f *  3.0f / textureSize.x, 16.0f * 4.0f / textureSize.y), },
+			{ 'd', ms::UVMake(16.0f *  3.0f / textureSize.x, 16.0f * 3.0f / textureSize.y, 16.0f *  4.0f / textureSize.x, 16.0f * 4.0f / textureSize.y), },
+			{ 'e', ms::UVMake(16.0f *  4.0f / textureSize.x, 16.0f * 3.0f / textureSize.y, 16.0f *  5.0f / textureSize.x, 16.0f * 4.0f / textureSize.y), },
+			{ 'f', ms::UVMake(16.0f *  5.0f / textureSize.x, 16.0f * 3.0f / textureSize.y, 16.0f *  6.0f / textureSize.x, 16.0f * 4.0f / textureSize.y), },
+			{ 'g', ms::UVMake(16.0f *  6.0f / textureSize.x, 16.0f * 3.0f / textureSize.y, 16.0f *  7.0f / textureSize.x, 16.0f * 4.0f / textureSize.y), },
+			{ 'h', ms::UVMake(16.0f *  7.0f / textureSize.x, 16.0f * 3.0f / textureSize.y, 16.0f *  8.0f / textureSize.x, 16.0f * 4.0f / textureSize.y), },
+			{ 'i', ms::UVMake(16.0f *  8.0f / textureSize.x, 16.0f * 3.0f / textureSize.y, 16.0f *  9.0f / textureSize.x, 16.0f * 4.0f / textureSize.y), },
+			{ 'j', ms::UVMake(16.0f *  9.0f / textureSize.x, 16.0f * 3.0f / textureSize.y, 16.0f * 10.0f / textureSize.x, 16.0f * 4.0f / textureSize.y), },
+			{ 'k', ms::UVMake(16.0f * 10.0f / textureSize.x, 16.0f * 3.0f / textureSize.y, 16.0f * 11.0f / textureSize.x, 16.0f * 4.0f / textureSize.y), },
+			{ 'l', ms::UVMake(16.0f * 11.0f / textureSize.x, 16.0f * 3.0f / textureSize.y, 16.0f * 12.0f / textureSize.x, 16.0f * 4.0f / textureSize.y), },
+			{ 'm', ms::UVMake(16.0f * 12.0f / textureSize.x, 16.0f * 3.0f / textureSize.y, 16.0f * 13.0f / textureSize.x, 16.0f * 4.0f / textureSize.y), },
+			{ 'n', ms::UVMake(16.0f * 13.0f / textureSize.x, 16.0f * 3.0f / textureSize.y, 16.0f * 14.0f / textureSize.x, 16.0f * 4.0f / textureSize.y), },
+			{ 'o', ms::UVMake(16.0f * 14.0f / textureSize.x, 16.0f * 3.0f / textureSize.y, 16.0f * 15.0f / textureSize.x, 16.0f * 4.0f / textureSize.y), },
+			{ 'p', ms::UVMake(16.0f * 15.0f / textureSize.x, 16.0f * 3.0f / textureSize.y, 16.0f * 16.0f / textureSize.x, 16.0f * 4.0f / textureSize.y), },
+			{ 'q', ms::UVMake(16.0f *  0.0f / textureSize.x, 16.0f * 4.0f / textureSize.y, 16.0f *  1.0f / textureSize.x, 16.0f * 5.0f / textureSize.y), },
+			{ 'r', ms::UVMake(16.0f *  1.0f / textureSize.x, 16.0f * 4.0f / textureSize.y, 16.0f *  2.0f / textureSize.x, 16.0f * 5.0f / textureSize.y), },
+			{ 's', ms::UVMake(16.0f *  2.0f / textureSize.x, 16.0f * 4.0f / textureSize.y, 16.0f *  3.0f / textureSize.x, 16.0f * 5.0f / textureSize.y), },
+			{ 't', ms::UVMake(16.0f *  3.0f / textureSize.x, 16.0f * 4.0f / textureSize.y, 16.0f *  4.0f / textureSize.x, 16.0f * 5.0f / textureSize.y), },
+			{ 'u', ms::UVMake(16.0f *  4.0f / textureSize.x, 16.0f * 4.0f / textureSize.y, 16.0f *  5.0f / textureSize.x, 16.0f * 5.0f / textureSize.y), },
+			{ 'v', ms::UVMake(16.0f *  5.0f / textureSize.x, 16.0f * 4.0f / textureSize.y, 16.0f *  6.0f / textureSize.x, 16.0f * 5.0f / textureSize.y), },
+			{ 'w', ms::UVMake(16.0f *  6.0f / textureSize.x, 16.0f * 4.0f / textureSize.y, 16.0f *  7.0f / textureSize.x, 16.0f * 5.0f / textureSize.y), },
+			{ 'x', ms::UVMake(16.0f *  7.0f / textureSize.x, 16.0f * 4.0f / textureSize.y, 16.0f *  8.0f / textureSize.x, 16.0f * 5.0f / textureSize.y), },
+			{ 'y', ms::UVMake(16.0f *  8.0f / textureSize.x, 16.0f * 4.0f / textureSize.y, 16.0f *  9.0f / textureSize.x, 16.0f * 5.0f / textureSize.y), },
+			{ 'z', ms::UVMake(16.0f *  9.0f / textureSize.x, 16.0f * 4.0f / textureSize.y, 16.0f * 10.0f / textureSize.x, 16.0f * 5.0f / textureSize.y), },
+			{ 'A', ms::UVMake(16.0f *  0.0f / textureSize.x, 16.0f * 5.0f / textureSize.y, 16.0f *  1.0f / textureSize.x, 16.0f * 6.0f / textureSize.y), },
+			{ 'B', ms::UVMake(16.0f *  1.0f / textureSize.x, 16.0f * 5.0f / textureSize.y, 16.0f *  2.0f / textureSize.x, 16.0f * 6.0f / textureSize.y), },
+			{ 'C', ms::UVMake(16.0f *  2.0f / textureSize.x, 16.0f * 5.0f / textureSize.y, 16.0f *  3.0f / textureSize.x, 16.0f * 6.0f / textureSize.y), },
+			{ 'D', ms::UVMake(16.0f *  3.0f / textureSize.x, 16.0f * 5.0f / textureSize.y, 16.0f *  4.0f / textureSize.x, 16.0f * 6.0f / textureSize.y), },
+			{ 'E', ms::UVMake(16.0f *  4.0f / textureSize.x, 16.0f * 5.0f / textureSize.y, 16.0f *  5.0f / textureSize.x, 16.0f * 6.0f / textureSize.y), },
+			{ 'F', ms::UVMake(16.0f *  5.0f / textureSize.x, 16.0f * 5.0f / textureSize.y, 16.0f *  6.0f / textureSize.x, 16.0f * 6.0f / textureSize.y), },
+			{ 'G', ms::UVMake(16.0f *  6.0f / textureSize.x, 16.0f * 5.0f / textureSize.y, 16.0f *  7.0f / textureSize.x, 16.0f * 6.0f / textureSize.y), },
+			{ 'H', ms::UVMake(16.0f *  7.0f / textureSize.x, 16.0f * 5.0f / textureSize.y, 16.0f *  8.0f / textureSize.x, 16.0f * 6.0f / textureSize.y), },
+			{ 'I', ms::UVMake(16.0f *  8.0f / textureSize.x, 16.0f * 5.0f / textureSize.y, 16.0f *  9.0f / textureSize.x, 16.0f * 6.0f / textureSize.y), },
+			{ 'J', ms::UVMake(16.0f *  9.0f / textureSize.x, 16.0f * 5.0f / textureSize.y, 16.0f * 10.0f / textureSize.x, 16.0f * 6.0f / textureSize.y), },
+			{ 'K', ms::UVMake(16.0f * 10.0f / textureSize.x, 16.0f * 5.0f / textureSize.y, 16.0f * 11.0f / textureSize.x, 16.0f * 6.0f / textureSize.y), },
+			{ 'L', ms::UVMake(16.0f * 11.0f / textureSize.x, 16.0f * 5.0f / textureSize.y, 16.0f * 12.0f / textureSize.x, 16.0f * 6.0f / textureSize.y), },
+			{ 'M', ms::UVMake(16.0f * 12.0f / textureSize.x, 16.0f * 5.0f / textureSize.y, 16.0f * 13.0f / textureSize.x, 16.0f * 6.0f / textureSize.y), },
+			{ 'N', ms::UVMake(16.0f * 13.0f / textureSize.x, 16.0f * 5.0f / textureSize.y, 16.0f * 14.0f / textureSize.x, 16.0f * 6.0f / textureSize.y), },
+			{ 'O', ms::UVMake(16.0f * 14.0f / textureSize.x, 16.0f * 5.0f / textureSize.y, 16.0f * 15.0f / textureSize.x, 16.0f * 6.0f / textureSize.y), },
+			{ 'P', ms::UVMake(16.0f * 15.0f / textureSize.x, 16.0f * 5.0f / textureSize.y, 16.0f * 16.0f / textureSize.x, 16.0f * 6.0f / textureSize.y), },
+			{ 'Q', ms::UVMake(16.0f *  0.0f / textureSize.x, 16.0f * 6.0f / textureSize.y, 16.0f *  1.0f / textureSize.x, 16.0f * 7.0f / textureSize.y), },
+			{ 'R', ms::UVMake(16.0f *  1.0f / textureSize.x, 16.0f * 6.0f / textureSize.y, 16.0f *  2.0f / textureSize.x, 16.0f * 7.0f / textureSize.y), },
+			{ 'S', ms::UVMake(16.0f *  2.0f / textureSize.x, 16.0f * 6.0f / textureSize.y, 16.0f *  3.0f / textureSize.x, 16.0f * 7.0f / textureSize.y), },
+			{ 'T', ms::UVMake(16.0f *  3.0f / textureSize.x, 16.0f * 6.0f / textureSize.y, 16.0f *  4.0f / textureSize.x, 16.0f * 7.0f / textureSize.y), },
+			{ 'U', ms::UVMake(16.0f *  4.0f / textureSize.x, 16.0f * 6.0f / textureSize.y, 16.0f *  5.0f / textureSize.x, 16.0f * 7.0f / textureSize.y), },
+			{ 'V', ms::UVMake(16.0f *  5.0f / textureSize.x, 16.0f * 6.0f / textureSize.y, 16.0f *  6.0f / textureSize.x, 16.0f * 7.0f / textureSize.y), },
+			{ 'W', ms::UVMake(16.0f *  6.0f / textureSize.x, 16.0f * 6.0f / textureSize.y, 16.0f *  7.0f / textureSize.x, 16.0f * 7.0f / textureSize.y), },
+			{ 'X', ms::UVMake(16.0f *  7.0f / textureSize.x, 16.0f * 6.0f / textureSize.y, 16.0f *  8.0f / textureSize.x, 16.0f * 7.0f / textureSize.y), },
+			{ 'Y', ms::UVMake(16.0f *  8.0f / textureSize.x, 16.0f * 6.0f / textureSize.y, 16.0f *  9.0f / textureSize.x, 16.0f * 7.0f / textureSize.y), },
+			{ 'Z', ms::UVMake(16.0f *  9.0f / textureSize.x, 16.0f * 6.0f / textureSize.y, 16.0f * 10.0f / textureSize.x, 16.0f * 7.0f / textureSize.y), },
+		};
+		{
+			ms::GLKeyedSprite* object = new ms::GLKeyedSprite;
+			ASSERT(object);
+			object->init(ARRAYSIZE(keyInfo), 64);
+			object->setColor([UIColor colorWithRed:1.0f green:1.0f blue:1.0f alpha:1.0f]);			
+			object->setTexture(texture);
+			for(int i = 0; i < ARRAYSIZE(keyInfo); i++){
+				object->setKeyInfo(i, keyInfo[i]);
+			}
+			object->setGapPos(ms::Vector2fMake(-8.0f, 0.0f));
+			ASSERT(!sprite);
+			sprite = object;
+		}
+		{
+			ms::GLKeyedSprite* object = new ms::GLKeyedSprite;
+			ASSERT(object);
+			object->init(ARRAYSIZE(keyInfo), 64);
+			object->setColor([UIColor colorWithRed:1.0f green:1.0f blue:1.0f alpha:1.0f]);			
+			object->setTexture(texture);
+			for(int i = 0; i < ARRAYSIZE(keyInfo); i++){
+				object->setKeyInfo(i, keyInfo[i]);
+			}
+			object->setGapPos(ms::Vector2fMake(-8.0f, 0.0f));
+			ASSERT(!fpsSprite);
+			fpsSprite = object;
+		}
+	}
+	{
+		ms::GLSprite* object = new ms::GLSprite;
+		ASSERT(object);
+		object->init();
+		object->setSize(ms::Vector2fMake(10.0f, 2.0f));
+		object->setColor([UIColor colorWithRed:0.0f green:1.0f blue:0.0f alpha:1.0f]);
+		ASSERT(!fpsBarSprite);
+		fpsBarSprite = object;
+	}
+}
+//--------------------------------
+BOOL SceneDebugString::update(ms::Uint32 elapsedTime){
+#ifdef DEBUG
+	BOOL isDraw = drawFlag;
+	Scene* scene = Scene::getInstance();
+	ASSERT(scene);
+	ms::Vector2n screenSize = ms::Vector2nMake(scene->getBackingWidth(), scene->getBackingHeight());
+	sprite->setPos(ms::Vector3fMake(60.0f, screenSize.y-16.0f, 0.0f));
+	//	sprite->setPos(ms::Vector3fMake(4.0f, 4.0f, 0.0f));
+	fpsSprite->setPos(ms::Vector3fMake(2.0f, screenSize.y-16.0f, 0.0f));
+	fpsBarSprite->setPos(ms::Vector3fMake(0.0f, screenSize.y-2.0f, 0.0f));
+	
+	if(elapsedTime > 0){
+		int fps = 1000 / (elapsedTime);
+		char dispString[128];
+		sprintf(dispString, "FPS %d", fps);
+		fpsSprite->setRenderKeyWithCString(dispString);
+		fpsBarSprite->setSize(ms::Vector2fMake(screenSize.x * (float)fps / 60.0f, 2.0f));
+	}
+	drawFlag = FALSE;
+	return isDraw;
+#else
+	return FALSE;
+#endif
+}
+//--------------------------------
+void SceneDebugString::draw(){
+#ifdef DEBUG
+	sprite->draw();
+	fpsSprite->draw();
+	fpsBarSprite->draw();
+#endif
+}
+//--------------------------------
+void SceneDebugString::setString(const char* string){
+	ASSERT(instance);
+	instance->sprite->setRenderKeyWithCString(string);
+	instance->drawFlag = TRUE;
+}
+//--------------------------------
+ms::GLTexture* SceneDebugString::getTexture(){
+	ASSERT(instance);	
+	return instance->texture;
+}

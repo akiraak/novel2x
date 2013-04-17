@@ -1,0 +1,11 @@
+
+enum {
+	HEART_MY_COUNT = 100,
+};
+enum LOCALIZE {
+	LOCALIZE_EN = 0,
+	LOCALIZE_JA,
+	
+	LOCALIZE_COUNT,
+};
+
